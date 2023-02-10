@@ -1,0 +1,8 @@
+__test__/_temp
+_temp/
+lib/
+node_modules/
+.vscode/
+
+# Mac DS_Store
+*.DS_Store

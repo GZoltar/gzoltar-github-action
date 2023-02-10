@@ -1,0 +1,21 @@
+name: 'GZoltar Feedback
+description: 'Analyzes GZoltar results and posts a comment on the pull request.'
+inputs:
+  token:
+    description: >
+      Personal access token (PAT) used to fetch the repository. The PAT is configured
+      with the local git config, which enables your scripts to run authenticated git
+      commands. The post-job step removes the PAT.
+      We recommend using a service account with the least permissions necessary.
+      Also when generating a new PAT, select the least scopes necessary.
+      [Learn more about creating and using encrypted secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets)
+    default: ${{ github.token }}
+  build-path:
+    description: 'Path to the build/target directory containing the GZoltar results'
+    default: '/build'
+  upload-artifacts:
+    description: 'Uploads the GZoltar results as an artifact'
+    default: false
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

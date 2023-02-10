@@ -1,0 +1,34 @@
+{
+  "name": "gzoltar-feedback-action",
+  "version": "0.0.1",
+  "description": "Create a comment for a commit on GitHub",
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "eslint src/**/*.ts",
+    "build": "tsc && ncc build",
+    "format": "prettier --write '**/*.ts'",
+    "format-check": "prettier --check '**/*.ts'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hugofpaiva/gzoltar-feedback-action.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hugofpaiva/gzoltar-feedback-action/issues"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1"
+  },
+  "devDependencies": {
+    "@tsconfig/node16": "^1.0.3",
+    "@types/node": "^18.13.0",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0",
+    "@vercel/ncc": "^0.32.0",
+    "eslint": "^8.33.0",
+    "eslint-config-google": "^0.14.0",
+    "prettier": "^2.8.4",
+    "typescript": "^4.9.5"
+  }
+}
