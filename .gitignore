@@ -4,5 +4,7 @@ lib/
 node_modules/
 .vscode/
 
+test_files/
+
 # Mac DS_Store
 *.DS_Store
