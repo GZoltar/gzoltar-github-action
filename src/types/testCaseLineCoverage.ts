@@ -1,4 +1,4 @@
-import { sourceCodeLine } from "./sourceCodeLine"
+import {sourceCodeLine} from './sourceCodeLine'
 
 export interface testCaseLineCoverage {
   line: sourceCodeLine

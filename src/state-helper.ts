@@ -16,3 +16,16 @@ function getCurrentSha(): string {
 
 export const currentSha = getCurrentSha();
 
+/**
+ * It returns the root directory of the repository
+ * @returns The root directory of the repository.
+ */
+function getRootDirectory(): string {
+  const rootDirectory = process.env.GITHUB_WORKSPACE;
+    if (rootDirectory == undefined) {
+      throw new Error('GITHUB_WORKSPACE is not defined');
+    }
+    return rootDirectory;
+}
+
+export const rootDirectory = getRootDirectory();

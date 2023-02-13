@@ -1,4 +1,4 @@
-import { sourceCodeFile } from "./sourceCodeFile"
+import {sourceCodeFile} from './sourceCodeFile'
 
 export interface sourceCodeMethod {
   name: string
