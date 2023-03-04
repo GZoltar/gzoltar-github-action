@@ -19,7 +19,7 @@ export class FileParser {
     this.parseTestCases(buildPath)
     this.parseStatistics(buildPath)
     this.parseSpectra(buildPath)
-    //TODO need to parse GZoltar spectra.csv or ochiai.ranking.csv
+    //TODO for each ranking inputed, parse the ranking file
     this.parseMatrix(buildPath)
   }
 
@@ -103,6 +103,11 @@ export class FileParser {
     const lines = fs.readFile(spectraFilePath!)
     try {
       lines.forEach(line => {
+        if (line.replace(/\s+/g, '') == 'name') {
+          // next line
+          return
+        }
+
         const parts = line.split(':')
 
         if (parts.length != 2) {
@@ -135,7 +140,7 @@ export class FileParser {
 
         if (!sourceCodeFile) {
           //TODO Missing adding path to sourceCodeFile
-          sourceCodeFile: sourceCodeFile = {
+          sourceCodeFile = {
             name: className,
             package: packageName
           }
@@ -154,7 +159,7 @@ export class FileParser {
         })
 
         if (!sourceCodeMethod) {
-          sourceCodeMethod: sourceCodeMethod = {
+          sourceCodeMethod = {
             name: methodName,
             file: sourceCodeFile,
             parameters: methodParameters
@@ -173,7 +178,7 @@ export class FileParser {
         })
 
         if (!sourceCodeLine) {
-          sourceCodeLine: sourceCodeLine = {
+          sourceCodeLine = {
             method: sourceCodeMethod,
             lineNumber: lineIdentifiedOnSpectra,
             suspiciousnessMetrics: []
@@ -188,8 +193,6 @@ export class FileParser {
         }`
       )
     }
-
-    //TODO parse and create sourceCode objects if they don't exist
   }
 
   private parseRanking(
@@ -203,6 +206,20 @@ export class FileParser {
 
     if (!ranking) {
       throw new Error("Arg 'ranking' must not be empty")
+    }
+
+    if (this.testCases.length == 0) {
+      throw new Error('testCases must be parsed first to parse ranking files')
+    }
+
+    if (
+      this.sourceCodeLines.length == 0 ||
+      this.sourceCodeMethods.length == 0 ||
+      this.sourceCodeFiles.length == 0
+    ) {
+      throw new Error(
+        'Ranking files can only be parsed after spectra file is parsed'
+      )
     }
 
     if (rankingFilePath) {
@@ -219,6 +236,91 @@ export class FileParser {
     }
 
     const lines = fs.readFile(rankingFilePath!)
+
+    try {
+      lines.forEach(line => {
+        if (line.replace(/\s+/g, '') == 'name;suspiciousness_value') {
+          // next line
+          return
+        }
+
+        const parts = line.split(';')
+
+        if (parts.length != 2) {
+          throw new Error(`ranking file '${rankingFilePath}' is invalid`)
+        }
+        const suspiciousnessValue = parseFloat(parts[1])
+
+        const methodLineInfo = parts[0].split(':')
+        const methodLocation = methodLineInfo[0].split('#')
+        const lineIdentifiedOnSpectra = parseInt(methodLineInfo[1])
+
+        const classFile = methodLocation[0].split('$')
+        const methodInfo = methodLocation[1].split('(')
+
+        const methodName = methodInfo[0]
+        let methodParameters = methodInfo[1].replace(')', '').split(',')
+
+        methodParameters = methodParameters.map((parameter, index) => {
+          parameter.trim()
+          return parameter
+        })
+
+        const packageName = classFile[0]
+        const className = classFile[1]
+
+        let sourceCodeFile = this.sourceCodeFiles.find(file => {
+          if (file.name == className && file.package == packageName) {
+            return true
+          }
+          return false
+        })
+
+        if (!sourceCodeFile) {
+          throw new Error('Ranking information inconsistent with spectra')
+        }
+
+        let sourceCodeMethod = this.sourceCodeMethods.find(method => {
+          if (
+            method.name == methodName &&
+            method.file == sourceCodeFile &&
+            method.parameters == methodParameters
+          ) {
+            return true
+          }
+          return false
+        })
+
+        if (!sourceCodeMethod) {
+          throw new Error('Ranking information inconsistent with spectra')
+        }
+
+        let sourceCodeLine = this.sourceCodeLines.find(line => {
+          if (
+            line.method == sourceCodeMethod &&
+            line.lineNumber == lineIdentifiedOnSpectra
+          ) {
+            return true
+          }
+          return false
+        })
+
+        if (!sourceCodeLine) {
+          throw new Error('Ranking information inconsistent with spectra')
+        } else {
+          sourceCodeLine.suspiciousnessMetrics.push({
+            algorithm: ranking,
+            suspiciousnessValue: suspiciousnessValue
+          })
+        }
+      })
+    } catch (error) {
+      throw new Error(
+        `Encountered an error when parsing ranking file '${rankingFilePath}': ${
+          (error as any)?.message ?? error
+        }`
+      )
+    }
 
     //TODO parse, throwing error if sourceCode files do not exist
   }
@@ -237,9 +339,7 @@ export class FileParser {
       this.sourceCodeMethods.length == 0 ||
       this.sourceCodeFiles.length == 0
     ) {
-      throw new Error(
-        'Matrix can only be parsed after spectra or ranking files are parsed'
-      )
+      throw new Error('Matrix can only be parsed after spectra file is parsed')
     }
 
     if (matrixFilePath) {
