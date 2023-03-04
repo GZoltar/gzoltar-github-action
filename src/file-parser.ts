@@ -1,8 +1,8 @@
-import { sourceCodeFile } from './types/sourceCodeFile'
-import { sourceCodeLine } from './types/sourceCodeLine'
-import { sourceCodeMethod } from './types/sourceCodeMethod'
-import { statistic } from './types/statistic'
-import { testCase } from './types/testCase'
+import {sourceCodeFile} from './types/sourceCodeFile'
+import {sourceCodeLine} from './types/sourceCodeLine'
+import {sourceCodeMethod} from './types/sourceCodeMethod'
+import {statistic} from './types/statistic'
+import {testCase} from './types/testCase'
 
 import * as stateHelper from './state-helper'
 import * as fs from './fs-helper'
@@ -18,9 +18,9 @@ export class FileParser {
   constructor(buildPath: string) {
     this.parseTestCases(buildPath)
     this.parseStatistics(buildPath)
+    this.parseSpectra(buildPath)
     //TODO need to parse GZoltar spectra.csv or ochiai.ranking.csv
     this.parseMatrix(buildPath)
-
   }
 
   private parseTestCases(
@@ -75,7 +75,8 @@ export class FileParser {
       return testCases
     } catch (error) {
       throw new Error(
-        `Encountered an error when parsing TestCases file '${testCasesFilePath}': ${(error as any)?.message ?? error
+        `Encountered an error when parsing TestCases file '${testCasesFilePath}': ${
+          (error as any)?.message ?? error
         }`
       )
     }
@@ -100,11 +101,102 @@ export class FileParser {
     }
 
     const lines = fs.readFile(spectraFilePath!)
+    try {
+      lines.forEach(line => {
+        const parts = line.split(':')
+
+        if (parts.length != 2) {
+          throw new Error(`spectra file '${spectraFilePath}' is invalid`)
+        }
+
+        const methodLocation = parts[0].split('#')
+        const lineIdentifiedOnSpectra = parseInt(parts[1])
+
+        const classFile = methodLocation[0].split('$')
+        const methodInfo = methodLocation[1].split('(')
+
+        const methodName = methodInfo[0]
+        let methodParameters = methodInfo[1].replace(')', '').split(',')
+
+        methodParameters = methodParameters.map((parameter, index) => {
+          parameter.trim()
+          return parameter
+        })
+
+        const packageName = classFile[0]
+        const className = classFile[1]
+
+        let sourceCodeFile = this.sourceCodeFiles.find(file => {
+          if (file.name == className && file.package == packageName) {
+            return true
+          }
+          return false
+        })
+
+        if (!sourceCodeFile) {
+          //TODO Missing adding path to sourceCodeFile
+          sourceCodeFile: sourceCodeFile = {
+            name: className,
+            package: packageName
+          }
+          this.sourceCodeFiles.push(sourceCodeFile)
+        }
+
+        let sourceCodeMethod = this.sourceCodeMethods.find(method => {
+          if (
+            method.name == methodName &&
+            method.file == sourceCodeFile &&
+            method.parameters == methodParameters
+          ) {
+            return true
+          }
+          return false
+        })
+
+        if (!sourceCodeMethod) {
+          sourceCodeMethod: sourceCodeMethod = {
+            name: methodName,
+            file: sourceCodeFile,
+            parameters: methodParameters
+          }
+          this.sourceCodeMethods.push(sourceCodeMethod)
+        }
+
+        let sourceCodeLine = this.sourceCodeLines.find(line => {
+          if (
+            line.method == sourceCodeMethod &&
+            line.lineNumber == lineIdentifiedOnSpectra
+          ) {
+            return true
+          }
+          return false
+        })
+
+        if (!sourceCodeLine) {
+          sourceCodeLine: sourceCodeLine = {
+            method: sourceCodeMethod,
+            lineNumber: lineIdentifiedOnSpectra,
+            suspiciousnessMetrics: []
+          }
+          this.sourceCodeLines.push(sourceCodeLine)
+        }
+      })
+    } catch (error) {
+      throw new Error(
+        `Encountered an error when parsing spectra file '${spectraFilePath}': ${
+          (error as any)?.message ?? error
+        }`
+      )
+    }
 
     //TODO parse and create sourceCode objects if they don't exist
   }
 
-  private parseRanking(buildPath: string, ranking: string, rankingFilePath?: string) {
+  private parseRanking(
+    buildPath: string,
+    ranking: string,
+    rankingFilePath?: string
+  ) {
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -128,8 +220,7 @@ export class FileParser {
 
     const lines = fs.readFile(rankingFilePath!)
 
-    //TODO parse and create sourceCode objects if they don't exist
-
+    //TODO parse, throwing error if sourceCode files do not exist
   }
 
   private parseMatrix(buildPath: string, matrixFilePath?: string): testCase[] {
@@ -141,8 +232,14 @@ export class FileParser {
       throw new Error('testCases must be parsed first to parse matrix')
     }
 
-    if (this.sourceCodeLines.length == 0 || this.sourceCodeMethods.length == 0 || this.sourceCodeFiles.length == 0) {
-      throw new Error("Matrix can only be parsed after spectra or ranking files are parsed")
+    if (
+      this.sourceCodeLines.length == 0 ||
+      this.sourceCodeMethods.length == 0 ||
+      this.sourceCodeFiles.length == 0
+    ) {
+      throw new Error(
+        'Matrix can only be parsed after spectra or ranking files are parsed'
+      )
     }
 
     if (matrixFilePath) {
@@ -173,11 +270,13 @@ export class FileParser {
         //TODO continue searching on the created sourceCodeLines by the correspondent to give coverage to it. If not found, throw error
         this.testCases[testCaseIndex].coverage = []
 
+        //TODO if the test results saved is different from the matrix file, throw error or log warning
       })
-      return this.testCases;
+      return this.testCases
     } catch (error) {
       throw new Error(
-        `Encountered an error when parsing matrix file '${matrixFilePath}': ${(error as any)?.message ?? error
+        `Encountered an error when parsing matrix file '${matrixFilePath}': ${
+          (error as any)?.message ?? error
         }`
       )
     }
@@ -242,7 +341,8 @@ export class FileParser {
       return statistics
     } catch (error) {
       throw new Error(
-        `Encountered an error when parsing statistics file '${statisticsFilePath}': ${(error as any)?.message ?? error
+        `Encountered an error when parsing statistics file '${statisticsFilePath}': ${
+          (error as any)?.message ?? error
         }`
       )
     }
