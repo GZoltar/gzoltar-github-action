@@ -1,8 +1,8 @@
-import {sourceCodeFile} from './types/sourceCodeFile'
-import {sourceCodeLine} from './types/sourceCodeLine'
-import {sourceCodeMethod} from './types/sourceCodeMethod'
-import {statistic} from './types/statistic'
-import {testCase} from './types/testCase'
+import { sourceCodeFile } from './types/sourceCodeFile'
+import { sourceCodeLine } from './types/sourceCodeLine'
+import { sourceCodeMethod } from './types/sourceCodeMethod'
+import { statistic } from './types/statistic'
+import { testCase } from './types/testCase'
 
 import * as stateHelper from './state-helper'
 import * as fs from './fs-helper'
@@ -16,8 +16,11 @@ export class FileParser {
   private statistics: statistic[] = []
 
   constructor(buildPath: string) {
-    this.parseStatistics(buildPath)
     this.parseTestCases(buildPath)
+    this.parseStatistics(buildPath)
+    //TODO need to parse GZoltar spectra.csv or ochiai.ranking.csv
+    this.parseMatrix(buildPath)
+
   }
 
   private parseTestCases(
@@ -72,11 +75,61 @@ export class FileParser {
       return testCases
     } catch (error) {
       throw new Error(
-        `Encountered an error when parsing TestCases file '${testCasesFilePath}': ${
-          (error as any)?.message ?? error
+        `Encountered an error when parsing TestCases file '${testCasesFilePath}': ${(error as any)?.message ?? error
         }`
       )
     }
+  }
+
+  private parseSpectra(buildPath: string, spectraFilePath?: string) {
+    if (!buildPath) {
+      throw new Error("Arg 'buildPath' must not be empty")
+    }
+
+    if (spectraFilePath) {
+      spectraFilePath = path.join(stateHelper.rootDirectory, spectraFilePath)
+      if (!fs.fileExists(spectraFilePath!)) {
+        throw new Error(`spectra file '${spectraFilePath}' does not exist`)
+      }
+    } else {
+      spectraFilePath = fs.searchFile(buildPath, 'spectra.csv')
+
+      if (!spectraFilePath) {
+        throw new Error(`spectra file '${spectraFilePath}' does not exist`)
+      }
+    }
+
+    const lines = fs.readFile(spectraFilePath!)
+
+    //TODO parse and create sourceCode objects if they don't exist
+  }
+
+  private parseRanking(buildPath: string, ranking: string, rankingFilePath?: string) {
+    if (!buildPath) {
+      throw new Error("Arg 'buildPath' must not be empty")
+    }
+
+    if (!ranking) {
+      throw new Error("Arg 'ranking' must not be empty")
+    }
+
+    if (rankingFilePath) {
+      rankingFilePath = path.join(stateHelper.rootDirectory, rankingFilePath)
+      if (!fs.fileExists(rankingFilePath!)) {
+        throw new Error(`ranking file '${rankingFilePath}' does not exist`)
+      }
+    } else {
+      rankingFilePath = fs.searchFile(buildPath, `${ranking}.ranking.csv`)
+
+      if (!rankingFilePath) {
+        throw new Error(`ranking file '${rankingFilePath}' does not exist`)
+      }
+    }
+
+    const lines = fs.readFile(rankingFilePath!)
+
+    //TODO parse and create sourceCode objects if they don't exist
+
   }
 
   private parseMatrix(buildPath: string, matrixFilePath?: string): testCase[] {
@@ -86,6 +139,10 @@ export class FileParser {
 
     if (this.testCases.length == 0) {
       throw new Error('testCases must be parsed first to parse matrix')
+    }
+
+    if (this.sourceCodeLines.length == 0 || this.sourceCodeMethods.length == 0 || this.sourceCodeFiles.length == 0) {
+      throw new Error("Matrix can only be parsed after spectra or ranking files are parsed")
     }
 
     if (matrixFilePath) {
@@ -113,15 +170,14 @@ export class FileParser {
           throw new Error(`matrix file '${matrixFilePath}' is invalid`)
         }
 
-        //TODO continue by parsing sourceCodeLines, Methods and Files.
+        //TODO continue searching on the created sourceCodeLines by the correspondent to give coverage to it. If not found, throw error
         this.testCases[testCaseIndex].coverage = []
 
       })
       return this.testCases;
     } catch (error) {
       throw new Error(
-        `Encountered an error when parsing matrix file '${matrixFilePath}': ${
-          (error as any)?.message ?? error
+        `Encountered an error when parsing matrix file '${matrixFilePath}': ${(error as any)?.message ?? error
         }`
       )
     }
@@ -186,8 +242,7 @@ export class FileParser {
       return statistics
     } catch (error) {
       throw new Error(
-        `Encountered an error when parsing statistics file '${statisticsFilePath}': ${
-          (error as any)?.message ?? error
+        `Encountered an error when parsing statistics file '${statisticsFilePath}': ${(error as any)?.message ?? error
         }`
       )
     }
