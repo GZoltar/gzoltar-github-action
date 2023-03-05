@@ -1,5 +1,5 @@
 export interface sourceCodeFile {
   name: string
-  package: string
+  packageName: string
   path?: string
 }

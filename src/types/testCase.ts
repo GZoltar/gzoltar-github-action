@@ -21,5 +21,5 @@ export interface testCase {
   /**
    * line coverage for this test case
    */
-  coverage?: testCaseLineCoverage[]
+  coverage: testCaseLineCoverage[]
 }

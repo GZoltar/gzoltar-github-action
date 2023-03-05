@@ -18,7 +18,18 @@ export function readFile(path: string): string[] {
   }
 }
 
-export function searchFile(dir: string, fileName: string): string | undefined {
+export function searchFile(
+  dir: string,
+  fileName: string,
+  classFileMode?: boolean,
+  packageName?: string
+): string | undefined {
+  if (classFileMode && !packageName) {
+    throw new Error(
+      'Arg mismatch. If classFileMode is true, packageName must be present'
+    )
+  }
+
   try {
     const files = fs.readdirSync(dir)
     for (const file of files) {
@@ -29,7 +40,24 @@ export function searchFile(dir: string, fileName: string): string | undefined {
       if (fileStat.isDirectory()) {
         searchFile(filePath, fileName)
       } else if (file.endsWith(fileName)) {
-        return filePath
+        if (classFileMode) {
+          const packageNameSplitted = packageName!.split('.')
+          let lastFoundIndex = -1
+          packageNameSplitted.every(value => {
+            const newIndex = filePath.search(value)
+            if (newIndex > lastFoundIndex && newIndex !== -1) {
+              lastFoundIndex = newIndex
+              return true
+            }
+            return false
+          })
+
+          if (lastFoundIndex !== -1) {
+            return filePath
+          }
+        } else {
+          return filePath
+        }
       }
     }
   } catch (error) {

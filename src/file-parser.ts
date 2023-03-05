@@ -66,7 +66,8 @@ export class FileParser {
           testName: parts[0],
           passed: parts[1] == 'PASS' ? true : false,
           runtime: parseInt(parts[2]),
-          stacktrace: parts[1] == 'PASS' ? undefined : parts[3]
+          stacktrace: parts[1] == 'PASS' ? undefined : parts[3],
+          coverage: []
         }
 
         testCases.push(testCase)
@@ -132,17 +133,18 @@ export class FileParser {
         const className = classFile[1]
 
         let sourceCodeFile = this.sourceCodeFiles.find(file => {
-          if (file.name == className && file.package == packageName) {
+          if (file.name == className && file.packageName == packageName) {
             return true
           }
           return false
         })
 
         if (!sourceCodeFile) {
-          //TODO Missing adding path to sourceCodeFile
+          const filePath = fs.searchFile(stateHelper.rootDirectory, `${className}.java`, true, packageName)
           sourceCodeFile = {
             name: className,
-            package: packageName
+            packageName: packageName,
+            path: filePath
           }
           this.sourceCodeFiles.push(sourceCodeFile)
         }
@@ -270,7 +272,7 @@ export class FileParser {
         const className = classFile[1]
 
         let sourceCodeFile = this.sourceCodeFiles.find(file => {
-          if (file.name == className && file.package == packageName) {
+          if (file.name == className && file.packageName == packageName) {
             return true
           }
           return false
@@ -308,6 +310,21 @@ export class FileParser {
         if (!sourceCodeLine) {
           throw new Error('Ranking information inconsistent with spectra')
         } else {
+          let suspiciousnessMetric = sourceCodeLine.suspiciousnessMetrics.find(
+            suspiciousnessMetric => {
+              if (suspiciousnessMetric.algorithm == ranking) {
+                return true
+              }
+              return false
+            }
+          )
+
+          if (suspiciousnessMetric) {
+            throw new Error(
+              `Ranking file '${rankingFilePath}' contains duplicate information for suspiciousness metric '${ranking}'`
+            )
+          }
+
           sourceCodeLine.suspiciousnessMetrics.push({
             algorithm: ranking,
             suspiciousnessValue: suspiciousnessValue
@@ -321,8 +338,6 @@ export class FileParser {
         }`
       )
     }
-
-    //TODO parse, throwing error if sourceCode files do not exist
   }
 
   private parseMatrix(buildPath: string, matrixFilePath?: string): testCase[] {
@@ -357,20 +372,50 @@ export class FileParser {
 
     const lines = fs.readFile(matrixFilePath!)
 
-    let testCaseIndex = 0
+    if (lines.length != this.testCases.length) {
+      throw new Error(`matrix file '${matrixFilePath}' is invalid`)
+    }
 
     try {
-      lines.forEach(line => {
+      lines.forEach((line, rowIndex) => {
         const parts = line.split(' ')
 
-        if (parts.length - 1 != this.testCases.length) {
+        if (parts.length - 1 != this.sourceCodeLines.length) {
           throw new Error(`matrix file '${matrixFilePath}' is invalid`)
         }
+        //TODO check if it follows the testCase and Spectra Order
 
-        //TODO continue searching on the created sourceCodeLines by the correspondent to give coverage to it. If not found, throw error
-        this.testCases[testCaseIndex].coverage = []
+        parts.forEach((testLineCoverage, columnIndex) => {
+          switch (testLineCoverage) {
+            case '0':
+              this.testCases[rowIndex].coverage.push({
+                line: this.sourceCodeLines[columnIndex],
+                covered: false
+              })
+              break
+            case '1':
+              this.testCases[rowIndex].coverage.push({
+                line: this.sourceCodeLines[columnIndex],
+                covered: true
+              })
+              break
+            case '+':
+              if (!this.testCases[rowIndex].passed)
+                throw new Error(
+                  `matrix file '${matrixFilePath}' is inconsistent with test results file`
+                )
+              break
+            case '-':
+              if (this.testCases[rowIndex].passed)
+                throw new Error(
+                  `matrix file '${matrixFilePath}' is inconsistent with test results file`
+                )
 
-        //TODO if the test results saved is different from the matrix file, throw error or log warning
+              break
+            default:
+              throw new Error(`matrix file '${matrixFilePath}' is invalid`)
+          }
+        })
       })
       return this.testCases
     } catch (error) {
