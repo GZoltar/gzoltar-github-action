@@ -13,9 +13,6 @@ inputs:
   build-path:
     description: 'Path to the build/target directory containing the GZoltar results'
     default: '/build'
-  ranking-files-path:
-    description: 'Path to the directory containing the fault localization report files produced by GZoltar. Example: `/build/sfl/txt/`'
-    default: '/build/sfl/txt/'
   serialized-coverage-file-path:
     description: 'Path to the file containing the serialized file with the coverage collect by GZoltar. Example: `/build/gzoltar.ser`'
     required: false

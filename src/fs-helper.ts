@@ -1,14 +1,44 @@
 const fs = require('fs')
 const path = require('path')
+const readline = require('readline')
 
-export function readFile(path: string): string[] {
+export function readFileAndGetLineReader(path: string): string[] {
   if (!path) {
     throw new Error("Arg 'path' must not be empty")
   }
 
   try {
-    const data = fs.readFileSync(path, 'UTF-8')
-    return data.split(/\r?\n/)
+    const fileStream = fs.createReadStream(path)
+    const rl = readline.createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    })
+    return rl
+  } catch (error) {
+    throw new Error(
+      `Encountered an error when reading file path '${path}': ${
+        (error as any)?.message ?? error
+      }`
+    )
+  }
+}
+
+export async function readFileAndGetLines(path: string): Promise<string[]> {
+  if (!path) {
+    throw new Error("Arg 'path' must not be empty")
+  }
+
+  try {
+    const fileStream = fs.createReadStream(path)
+    const rl = readline.createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    })
+    const lines = []
+    for await (const line of rl) {
+      lines.push(line)
+    }
+    return lines
   } catch (error) {
     throw new Error(
       `Encountered an error when reading file path '${path}': ${
@@ -38,7 +68,11 @@ export function searchFile(
       const fileStat = fs.statSync(filePath)
 
       if (fileStat.isDirectory()) {
-        searchFile(filePath, fileName)
+        files.push(
+          ...fs
+            .readdirSync(filePath)
+            .map((item: string) => path.join(file, item))
+        )
       } else if (file.endsWith(fileName)) {
         if (classFileMode) {
           const packageNameSplitted = packageName!.split('.')

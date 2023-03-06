@@ -1,5 +1,10 @@
 import * as github from '@actions/github'
+import * as core from '@actions/core'
 
+/**
+ * Indicates whether the POST action is running
+ */
+export const IsPost = !!core.getState('isPost')
 
 /**
  * It returns the SHA of the current commit, or the SHA of the head of the pull request if the current
@@ -14,18 +19,18 @@ function getCurrentSha(): string {
   }
 }
 
-export const currentSha = getCurrentSha();
+export const currentSha = getCurrentSha()
 
 /**
  * It returns the root directory of the repository
  * @returns The root directory of the repository.
  */
 function getRootDirectory(): string {
-  const rootDirectory = process.env.GITHUB_WORKSPACE;
-    if (rootDirectory == undefined) {
-      throw new Error('GITHUB_WORKSPACE is not defined');
-    }
-    return rootDirectory;
+  const rootDirectory = process.env.GITHUB_WORKSPACE || '/Users/paiva/Documents/Tese/gzoltar-feedback-action'
+  if (rootDirectory == undefined) {
+    throw new Error('GITHUB_WORKSPACE is not defined')
+  }
+  return rootDirectory
 }
 
-export const rootDirectory = getRootDirectory();
+export const rootDirectory = getRootDirectory()

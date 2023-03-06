@@ -1,9 +1,11 @@
 {
     "extends": "@tsconfig/node16/tsconfig.json",
     "compilerOptions": {
+      "target": "ES2021",
+      "removeComments": true,
+      "preserveConstEnums": true,
       "outDir": "./lib",
       "rootDir": "./src",
-      "declaration": true,
       "strict": true,
     },
     "exclude": ["lib", "node_modules"]

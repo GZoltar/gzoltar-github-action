@@ -8,25 +8,56 @@ import * as stateHelper from './state-helper'
 import * as fs from './fs-helper'
 const path = require('path')
 
-export class FileParser {
-  private sourceCodeFiles: sourceCodeFile[] = []
-  private sourceCodeMethods: sourceCodeMethod[] = []
-  private sourceCodeLines: sourceCodeLine[] = []
-  private testCases: testCase[] = []
-  private statistics: statistic[] = []
+export default class FileParser {
+  private _sourceCodeFiles: sourceCodeFile[] = []
+  private _sourceCodeMethods: sourceCodeMethod[] = []
+  private _sourceCodeLines: sourceCodeLine[] = []
+  private _testCases: testCase[] = []
+  private _statistics: statistic[] = []
 
-  constructor(buildPath: string) {
-    this.parseTestCases(buildPath)
-    this.parseStatistics(buildPath)
-    this.parseSpectra(buildPath)
-    //TODO for each ranking inputed, parse the ranking file
-    this.parseMatrix(buildPath)
+  constructor() {}
+
+  public async parse(
+    buildPath: string,
+    sflRanking: string[],
+    testCasesFilePath?: string,
+    spectraFilePath?: string,
+    matrixFilePath?: string,
+    statisticsFilePath?: string
+  ) {
+    await this.parseTestCases(buildPath, testCasesFilePath)
+    await this.parseSpectra(buildPath, spectraFilePath)
+    sflRanking.forEach(async ranking => {
+      await this.parseRanking(buildPath, ranking)
+    })
+    await this.parseMatrix(buildPath, matrixFilePath)
+    await this.parseStatistics(buildPath, statisticsFilePath)
   }
 
-  private parseTestCases(
+  public get sourceCodeFiles(): sourceCodeFile[] {
+    return this._sourceCodeFiles
+  }
+
+  public get sourceCodeMethods(): sourceCodeMethod[] {
+    return this._sourceCodeMethods
+  }
+
+  public get sourceCodeLines(): sourceCodeLine[] {
+    return this._sourceCodeLines
+  }
+
+  public get testCases(): testCase[] {
+    return this._testCases
+  }
+
+  public get statistics(): statistic[] {
+    return this._statistics
+  }
+
+  private async parseTestCases(
     buildPath: string,
     testCasesFilePath?: string
-  ): testCase[] {
+  ): Promise<testCase[]> {
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -47,7 +78,7 @@ export class FileParser {
       }
     }
 
-    const lines = fs.readFile(testCasesFilePath!)
+    const lines = await fs.readFileAndGetLines(testCasesFilePath!)
 
     let testCases: testCase[] = []
     try {
@@ -72,7 +103,7 @@ export class FileParser {
 
         testCases.push(testCase)
       })
-      this.testCases = testCases
+      this._testCases = testCases
       return testCases
     } catch (error) {
       throw new Error(
@@ -83,7 +114,7 @@ export class FileParser {
     }
   }
 
-  private parseSpectra(buildPath: string, spectraFilePath?: string) {
+  private async parseSpectra(buildPath: string, spectraFilePath?: string) {
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -101,7 +132,7 @@ export class FileParser {
       }
     }
 
-    const lines = fs.readFile(spectraFilePath!)
+    const lines = await fs.readFileAndGetLines(spectraFilePath!)
     try {
       lines.forEach(line => {
         if (line.replace(/\s+/g, '') == 'name') {
@@ -122,17 +153,18 @@ export class FileParser {
         const methodInfo = methodLocation[1].split('(')
 
         const methodName = methodInfo[0]
-        let methodParameters = methodInfo[1].replace(')', '').split(',')
+        const methodParametersString = methodInfo[1]
+          .replace(')', '')
+          .replace(/\s+/g, '')
+        let methodParameters: string[] = []
 
-        methodParameters = methodParameters.map((parameter, index) => {
-          parameter.trim()
-          return parameter
-        })
-
+        if (methodParametersString != '') {
+          methodParameters = methodParametersString.split(',')
+        }
         const packageName = classFile[0]
         const className = classFile[1]
 
-        let sourceCodeFile = this.sourceCodeFiles.find(file => {
+        let sourceCodeFile = this._sourceCodeFiles.find(file => {
           if (file.name == className && file.packageName == packageName) {
             return true
           }
@@ -140,20 +172,25 @@ export class FileParser {
         })
 
         if (!sourceCodeFile) {
-          const filePath = fs.searchFile(stateHelper.rootDirectory, `${className}.java`, true, packageName)
+          const filePath = fs.searchFile(
+            stateHelper.rootDirectory,
+            `${className}.java`,
+            true,
+            packageName
+          )
           sourceCodeFile = {
             name: className,
             packageName: packageName,
             path: filePath
           }
-          this.sourceCodeFiles.push(sourceCodeFile)
+          this._sourceCodeFiles.push(sourceCodeFile)
         }
 
         let sourceCodeMethod = this.sourceCodeMethods.find(method => {
           if (
             method.name == methodName &&
             method.file == sourceCodeFile &&
-            method.parameters == methodParameters
+            method.parameters.toString() == methodParameters.toString()
           ) {
             return true
           }
@@ -166,10 +203,10 @@ export class FileParser {
             file: sourceCodeFile,
             parameters: methodParameters
           }
-          this.sourceCodeMethods.push(sourceCodeMethod)
+          this._sourceCodeMethods.push(sourceCodeMethod)
         }
 
-        let sourceCodeLine = this.sourceCodeLines.find(line => {
+        let sourceCodeLine = this._sourceCodeLines.find(line => {
           if (
             line.method == sourceCodeMethod &&
             line.lineNumber == lineIdentifiedOnSpectra
@@ -185,7 +222,7 @@ export class FileParser {
             lineNumber: lineIdentifiedOnSpectra,
             suspiciousnessMetrics: []
           }
-          this.sourceCodeLines.push(sourceCodeLine)
+          this._sourceCodeLines.push(sourceCodeLine)
         }
       })
     } catch (error) {
@@ -197,7 +234,7 @@ export class FileParser {
     }
   }
 
-  private parseRanking(
+  private async parseRanking(
     buildPath: string,
     ranking: string,
     rankingFilePath?: string
@@ -210,14 +247,14 @@ export class FileParser {
       throw new Error("Arg 'ranking' must not be empty")
     }
 
-    if (this.testCases.length == 0) {
+    if (this._testCases.length == 0) {
       throw new Error('testCases must be parsed first to parse ranking files')
     }
 
     if (
-      this.sourceCodeLines.length == 0 ||
-      this.sourceCodeMethods.length == 0 ||
-      this.sourceCodeFiles.length == 0
+      this._sourceCodeLines.length == 0 ||
+      this._sourceCodeMethods.length == 0 ||
+      this._sourceCodeFiles.length == 0
     ) {
       throw new Error(
         'Ranking files can only be parsed after spectra file is parsed'
@@ -237,7 +274,7 @@ export class FileParser {
       }
     }
 
-    const lines = fs.readFile(rankingFilePath!)
+    const lines = await fs.readFileAndGetLines(rankingFilePath!)
 
     try {
       lines.forEach(line => {
@@ -271,7 +308,7 @@ export class FileParser {
         const packageName = classFile[0]
         const className = classFile[1]
 
-        let sourceCodeFile = this.sourceCodeFiles.find(file => {
+        let sourceCodeFile = this._sourceCodeFiles.find(file => {
           if (file.name == className && file.packageName == packageName) {
             return true
           }
@@ -282,11 +319,11 @@ export class FileParser {
           throw new Error('Ranking information inconsistent with spectra')
         }
 
-        let sourceCodeMethod = this.sourceCodeMethods.find(method => {
+        let sourceCodeMethod = this._sourceCodeMethods.find(method => {
           if (
             method.name == methodName &&
             method.file == sourceCodeFile &&
-            method.parameters == methodParameters
+            method.parameters.toString() == methodParameters.toString()
           ) {
             return true
           }
@@ -297,7 +334,7 @@ export class FileParser {
           throw new Error('Ranking information inconsistent with spectra')
         }
 
-        let sourceCodeLine = this.sourceCodeLines.find(line => {
+        let sourceCodeLine = this._sourceCodeLines.find(line => {
           if (
             line.method == sourceCodeMethod &&
             line.lineNumber == lineIdentifiedOnSpectra
@@ -340,19 +377,22 @@ export class FileParser {
     }
   }
 
-  private parseMatrix(buildPath: string, matrixFilePath?: string): testCase[] {
+  private async parseMatrix(
+    buildPath: string,
+    matrixFilePath?: string
+  ): Promise<testCase[]> {
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
 
-    if (this.testCases.length == 0) {
+    if (this._testCases.length == 0) {
       throw new Error('testCases must be parsed first to parse matrix')
     }
 
     if (
-      this.sourceCodeLines.length == 0 ||
-      this.sourceCodeMethods.length == 0 ||
-      this.sourceCodeFiles.length == 0
+      this._sourceCodeLines.length == 0 ||
+      this._sourceCodeMethods.length == 0 ||
+      this._sourceCodeFiles.length == 0
     ) {
       throw new Error('Matrix can only be parsed after spectra file is parsed')
     }
@@ -370,9 +410,9 @@ export class FileParser {
       }
     }
 
-    const lines = fs.readFile(matrixFilePath!)
+    const lines = await fs.readFileAndGetLines(matrixFilePath!)
 
-    if (lines.length != this.testCases.length) {
+    if (lines.length != this._testCases.length) {
       throw new Error(`matrix file '${matrixFilePath}' is invalid`)
     }
 
@@ -380,7 +420,7 @@ export class FileParser {
       lines.forEach((line, rowIndex) => {
         const parts = line.split(' ')
 
-        if (parts.length - 1 != this.sourceCodeLines.length) {
+        if (parts.length - 1 != this._sourceCodeLines.length) {
           throw new Error(`matrix file '${matrixFilePath}' is invalid`)
         }
         //TODO check if it follows the testCase and Spectra Order
@@ -388,25 +428,25 @@ export class FileParser {
         parts.forEach((testLineCoverage, columnIndex) => {
           switch (testLineCoverage) {
             case '0':
-              this.testCases[rowIndex].coverage.push({
-                line: this.sourceCodeLines[columnIndex],
+              this._testCases[rowIndex].coverage.push({
+                line: this._sourceCodeLines[columnIndex],
                 covered: false
               })
               break
             case '1':
-              this.testCases[rowIndex].coverage.push({
-                line: this.sourceCodeLines[columnIndex],
+              this._testCases[rowIndex].coverage.push({
+                line: this._sourceCodeLines[columnIndex],
                 covered: true
               })
               break
             case '+':
-              if (!this.testCases[rowIndex].passed)
+              if (!this._testCases[rowIndex].passed)
                 throw new Error(
                   `matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
               break
             case '-':
-              if (this.testCases[rowIndex].passed)
+              if (this._testCases[rowIndex].passed)
                 throw new Error(
                   `matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
@@ -417,7 +457,7 @@ export class FileParser {
           }
         })
       })
-      return this.testCases
+      return this._testCases
     } catch (error) {
       throw new Error(
         `Encountered an error when parsing matrix file '${matrixFilePath}': ${
@@ -427,10 +467,10 @@ export class FileParser {
     }
   }
 
-  private parseStatistics(
+  private async parseStatistics(
     buildPath: string,
     statisticsFilePath?: string
-  ): statistic[] {
+  ): Promise<statistic[]> {
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -448,7 +488,7 @@ export class FileParser {
         )
       }
 
-      lines = fs.readFile(statisticsFilePath!)
+      lines = await fs.readFileAndGetLines(statisticsFilePath!)
     } else {
       statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv')
 
@@ -458,7 +498,7 @@ export class FileParser {
         )
       }
 
-      lines = fs.readFile(statisticsFilePath)
+      lines = await fs.readFileAndGetLines(statisticsFilePath)
     }
 
     let statistics: statistic[] = []
@@ -482,7 +522,7 @@ export class FileParser {
 
         statistics.push(statistic)
       })
-      this.statistics = statistics
+      this._statistics = statistics
       return statistics
     } catch (error) {
       throw new Error(
