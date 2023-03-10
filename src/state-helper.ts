@@ -26,7 +26,7 @@ export const currentSha = getCurrentSha()
  * @returns The root directory of the repository.
  */
 function getRootDirectory(): string {
-  const rootDirectory = process.env.GITHUB_WORKSPACE || '/Users/paiva/Documents/Tese/gzoltar-feedback-action'
+  const rootDirectory = process.env.GITHUB_WORKSPACE
   if (rootDirectory == undefined) {
     throw new Error('GITHUB_WORKSPACE is not defined')
   }

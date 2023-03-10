@@ -1,19 +1,21 @@
-import {sourceCodeFile} from './types/sourceCodeFile'
-import {sourceCodeLine} from './types/sourceCodeLine'
-import {sourceCodeMethod} from './types/sourceCodeMethod'
-import {statistic} from './types/statistic'
-import {testCase} from './types/testCase'
+import * as core from '@actions/core'
+
+import {ISourceCodeFile} from './types/sourceCodeFile'
+import {ISourceCodeLine} from './types/sourceCodeLine'
+import {ISourceCodeMethod} from './types/sourceCodeMethod'
+import {IStatistic} from './types/statistic'
+import {ITestCase} from './types/testCase'
 
 import * as stateHelper from './state-helper'
 import * as fs from './fs-helper'
 const path = require('path')
 
 export default class FileParser {
-  private _sourceCodeFiles: sourceCodeFile[] = []
-  private _sourceCodeMethods: sourceCodeMethod[] = []
-  private _sourceCodeLines: sourceCodeLine[] = []
-  private _testCases: testCase[] = []
-  private _statistics: statistic[] = []
+  private _sourceCodeFiles: ISourceCodeFile[] = []
+  private _sourceCodeMethods: ISourceCodeMethod[] = []
+  private _sourceCodeLines: ISourceCodeLine[] = []
+  private _testCases: ITestCase[] = []
+  private _statistics: IStatistic[] = []
 
   constructor() {}
 
@@ -34,30 +36,32 @@ export default class FileParser {
     await this.parseStatistics(buildPath, statisticsFilePath)
   }
 
-  public get sourceCodeFiles(): sourceCodeFile[] {
+  public get sourceCodeFiles(): ISourceCodeFile[] {
     return this._sourceCodeFiles
   }
 
-  public get sourceCodeMethods(): sourceCodeMethod[] {
+  public get sourceCodeMethods(): ISourceCodeMethod[] {
     return this._sourceCodeMethods
   }
 
-  public get sourceCodeLines(): sourceCodeLine[] {
+  public get sourceCodeLines(): ISourceCodeLine[] {
     return this._sourceCodeLines
   }
 
-  public get testCases(): testCase[] {
+  public get testCases(): ITestCase[] {
     return this._testCases
   }
 
-  public get statistics(): statistic[] {
+  public get statistics(): IStatistic[] {
     return this._statistics
   }
 
   private async parseTestCases(
     buildPath: string,
     testCasesFilePath?: string
-  ): Promise<testCase[]> {
+  ): Promise<ITestCase[]> {
+    core.info(`Parsing test cases...`)
+
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -71,6 +75,7 @@ export default class FileParser {
         throw new Error(`TestCases file '${testCasesFilePath}' does not exist`)
       }
     } else {
+      core.debug(`No testCasesFilePath found, starting search...`)
       testCasesFilePath = fs.searchFile(buildPath, 'tests.csv')
 
       if (!testCasesFilePath) {
@@ -80,7 +85,7 @@ export default class FileParser {
 
     const lines = await fs.readFileAndGetLines(testCasesFilePath!)
 
-    let testCases: testCase[] = []
+    let testCases: ITestCase[] = []
     try {
       lines.forEach(line => {
         if (line.replace(/\s+/g, '') == 'name,outcome,runtime,stacktrace') {
@@ -93,7 +98,7 @@ export default class FileParser {
           throw new Error(`TestCases file '${testCasesFilePath}' is invalid`)
         }
 
-        const testCase: testCase = {
+        const testCase: ITestCase = {
           testName: parts[0],
           passed: parts[1] == 'PASS' ? true : false,
           runtime: parseInt(parts[2]),
@@ -115,6 +120,8 @@ export default class FileParser {
   }
 
   private async parseSpectra(buildPath: string, spectraFilePath?: string) {
+    core.info(`Parsing spectra...`)
+
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -125,6 +132,7 @@ export default class FileParser {
         throw new Error(`spectra file '${spectraFilePath}' does not exist`)
       }
     } else {
+      core.debug(`No spectraFilePath found, starting search...`)
       spectraFilePath = fs.searchFile(buildPath, 'spectra.csv')
 
       if (!spectraFilePath) {
@@ -239,6 +247,8 @@ export default class FileParser {
     ranking: string,
     rankingFilePath?: string
   ) {
+    core.info(`Parsing ranking ${ranking}...`)
+
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -267,6 +277,9 @@ export default class FileParser {
         throw new Error(`ranking file '${rankingFilePath}' does not exist`)
       }
     } else {
+      core.debug(
+        `No rankingFilePath for ranking ${ranking} found, starting search...`
+      )
       rankingFilePath = fs.searchFile(buildPath, `${ranking}.ranking.csv`)
 
       if (!rankingFilePath) {
@@ -380,7 +393,8 @@ export default class FileParser {
   private async parseMatrix(
     buildPath: string,
     matrixFilePath?: string
-  ): Promise<testCase[]> {
+  ): Promise<ITestCase[]> {
+    core.info(`Parsing matrix...`)
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -403,6 +417,7 @@ export default class FileParser {
         throw new Error(`matrix file '${matrixFilePath}' does not exist`)
       }
     } else {
+      core.debug(`No matrixFilePath found, starting search...`)
       matrixFilePath = fs.searchFile(buildPath, 'matrix.txt')
 
       if (!matrixFilePath) {
@@ -470,7 +485,8 @@ export default class FileParser {
   private async parseStatistics(
     buildPath: string,
     statisticsFilePath?: string
-  ): Promise<statistic[]> {
+  ): Promise<IStatistic[]> {
+    core.info(`Parsing statistics...`)
     if (!buildPath) {
       throw new Error("Arg 'buildPath' must not be empty")
     }
@@ -490,6 +506,7 @@ export default class FileParser {
 
       lines = await fs.readFileAndGetLines(statisticsFilePath!)
     } else {
+      core.debug(`No statisticsFilePath found, starting search...`)
       statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv')
 
       if (!statisticsFilePath) {
@@ -501,7 +518,7 @@ export default class FileParser {
       lines = await fs.readFileAndGetLines(statisticsFilePath)
     }
 
-    let statistics: statistic[] = []
+    let statistics: IStatistic[] = []
     try {
       lines.forEach(line => {
         if (line.replace(/\s+/g, '') == 'formula,metric_name,metric_value') {
@@ -514,7 +531,7 @@ export default class FileParser {
           throw new Error(`Statistics file '${statisticsFilePath}' is invalid`)
         }
 
-        const statistic: statistic = {
+        const statistic: IStatistic = {
           formula: parts[0],
           metric_name: parts[1],
           metric_value: parseFloat(parts[2])

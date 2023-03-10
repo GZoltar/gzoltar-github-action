@@ -1,6 +1,6 @@
-import {testCaseLineCoverage} from './testCaseLineCoverage'
+import {ITestCaseLineCoverage} from './testCaseLineCoverage'
 
-export interface testCase {
+export interface ITestCase {
   testName: string
 
   /**
@@ -21,5 +21,5 @@ export interface testCase {
   /**
    * line coverage for this test case
    */
-  coverage: testCaseLineCoverage[]
+  coverage: ITestCaseLineCoverage[]
 }

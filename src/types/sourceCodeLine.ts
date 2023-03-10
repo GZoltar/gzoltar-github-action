@@ -1,8 +1,8 @@
-import {algorithmSuspiciousness} from './algorithmSuspiciousness'
-import {sourceCodeMethod} from './sourceCodeMethod'
+import {IAlgorithmSuspiciousness} from './algorithmSuspiciousness'
+import {ISourceCodeMethod} from './sourceCodeMethod'
 
-export interface sourceCodeLine {
+export interface ISourceCodeLine {
   lineNumber: number
-  method: sourceCodeMethod
-  suspiciousnessMetrics: algorithmSuspiciousness[]
+  method: ISourceCodeMethod
+  suspiciousnessMetrics: IAlgorithmSuspiciousness[]
 }

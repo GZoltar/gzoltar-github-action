@@ -1,7 +1,7 @@
-import {sourceCodeFile} from './sourceCodeFile'
+import {ISourceCodeFile} from './sourceCodeFile'
 
-export interface sourceCodeMethod {
+export interface ISourceCodeMethod {
   name: string
   parameters: string[]
-  file: sourceCodeFile
+  file: ISourceCodeFile
 }

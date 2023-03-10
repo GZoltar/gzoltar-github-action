@@ -1,6 +1,6 @@
-import {sourceCodeLine} from './sourceCodeLine'
+import {ISourceCodeLine} from './sourceCodeLine'
 
-export interface testCaseLineCoverage {
-  line: sourceCodeLine
+export interface ITestCaseLineCoverage {
+  line: ISourceCodeLine
   covered: boolean
 }

@@ -25,14 +25,17 @@ inputs:
   matrix-file-path:
     description: 'Path to the file containing a binary coverage matrix produced by GZoltar. Example: `/build/sfl/txt/matrix.txt`'
     required: false
-  sfl-ranking:
-    description: 'List of the SFL ranking algorithms to use. Example: `[ochiai, tarantula]` (Keep in mind that each algorithm need to have present a fault localization report file in the `ranking-files-path` directory with his name, i.e. `ochiai.ranking.csv`.)'
-    default: ['ochiai']
   statistics-file-path:
     description: 'Path to the file containing statistics information of the ranking produced by GZoltar. Example: `/build/sfl/txt/statistics.csv`'
     required: false
+  sfl-ranking:
+    description: 'List of the SFL ranking algorithms to use separated by `,`. (Keep in mind that each algorithm need to have present a fault localization report file in the `ranking-files-path` directory with his name, i.e. `ochiai.ranking.csv`.)'
+    default: [ochiai]
+  sfl-threshold:
+    description: 'Line suspiciousness threshold to trigger an warning. A threshold is needed for each SFL ranking algorithms used'
+    default: [0.5]
   upload-artifacts:
-    description: 'Uploads the GZoltar results as an artifact'
+    description: 'Indicates whether to upload the GZoltar results as an artifact'
     default: false
 runs:
   using: 'node16'
