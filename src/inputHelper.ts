@@ -54,6 +54,12 @@ export async function getInputs(): Promise<IInputs> {
     )
   }
 
+  if (sflRanking.length !== sflThreshold.length) {
+    throw new Error(
+      'The number of elements in `sfl-ranking` and `sfl-threshold` should be the same.'
+    )
+  }
+
   // Upload Artifacts
   const uploadArtifacts: boolean = core.getInput('upload-artifacts') === 'true'
 

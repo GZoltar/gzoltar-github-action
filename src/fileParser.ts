@@ -6,8 +6,8 @@ import {ISourceCodeMethod} from './types/sourceCodeMethod'
 import {IStatistic} from './types/statistic'
 import {ITestCase} from './types/testCase'
 
-import * as stateHelper from './state-helper'
-import * as fs from './fs-helper'
+import * as stateHelper from './stateHelper'
+import * as fs from './fsHelper'
 const path = require('path')
 
 export default class FileParser {

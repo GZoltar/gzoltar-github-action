@@ -34,3 +34,7 @@ function getRootDirectory(): string {
 }
 
 export const rootDirectory = getRootDirectory()
+
+export const repoOwner = github.context.repo.owner;
+
+export const repoName = github.context.repo.repo;
