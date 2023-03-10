@@ -9597,7 +9597,7 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 9698:
+/***/ 7303:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -9626,8 +9626,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const stateHelper = __importStar(__nccwpck_require__(963));
-const fs = __importStar(__nccwpck_require__(6642));
+const core = __importStar(__nccwpck_require__(2186));
+const stateHelper = __importStar(__nccwpck_require__(9319));
+const fs = __importStar(__nccwpck_require__(6497));
 const path = __nccwpck_require__(1017);
 class FileParser {
     constructor() {
@@ -9662,6 +9663,7 @@ class FileParser {
         return this._statistics;
     }
     async parseTestCases(buildPath, testCasesFilePath) {
+        core.info(`Parsing test cases...`);
         if (!buildPath) {
             throw new Error("Arg 'buildPath' must not be empty");
         }
@@ -9672,6 +9674,7 @@ class FileParser {
             }
         }
         else {
+            core.debug(`No testCasesFilePath found, starting search...`);
             testCasesFilePath = fs.searchFile(buildPath, 'tests.csv');
             if (!testCasesFilePath) {
                 throw new Error(`TestCases file '${testCasesFilePath}' does not exist`);
@@ -9705,6 +9708,7 @@ class FileParser {
         }
     }
     async parseSpectra(buildPath, spectraFilePath) {
+        core.info(`Parsing spectra...`);
         if (!buildPath) {
             throw new Error("Arg 'buildPath' must not be empty");
         }
@@ -9715,6 +9719,7 @@ class FileParser {
             }
         }
         else {
+            core.debug(`No spectraFilePath found, starting search...`);
             spectraFilePath = fs.searchFile(buildPath, 'spectra.csv');
             if (!spectraFilePath) {
                 throw new Error(`spectra file '${spectraFilePath}' does not exist`);
@@ -9797,6 +9802,7 @@ class FileParser {
         }
     }
     async parseRanking(buildPath, ranking, rankingFilePath) {
+        core.info(`Parsing ranking ${ranking}...`);
         if (!buildPath) {
             throw new Error("Arg 'buildPath' must not be empty");
         }
@@ -9818,6 +9824,7 @@ class FileParser {
             }
         }
         else {
+            core.debug(`No rankingFilePath for ranking ${ranking} found, starting search...`);
             rankingFilePath = fs.searchFile(buildPath, `${ranking}.ranking.csv`);
             if (!rankingFilePath) {
                 throw new Error(`ranking file '${rankingFilePath}' does not exist`);
@@ -9899,6 +9906,7 @@ class FileParser {
         }
     }
     async parseMatrix(buildPath, matrixFilePath) {
+        core.info(`Parsing matrix...`);
         if (!buildPath) {
             throw new Error("Arg 'buildPath' must not be empty");
         }
@@ -9917,6 +9925,7 @@ class FileParser {
             }
         }
         else {
+            core.debug(`No matrixFilePath found, starting search...`);
             matrixFilePath = fs.searchFile(buildPath, 'matrix.txt');
             if (!matrixFilePath) {
                 throw new Error(`matrix file '${matrixFilePath}' does not exist`);
@@ -9966,6 +9975,7 @@ class FileParser {
         }
     }
     async parseStatistics(buildPath, statisticsFilePath) {
+        core.info(`Parsing statistics...`);
         if (!buildPath) {
             throw new Error("Arg 'buildPath' must not be empty");
         }
@@ -9978,6 +9988,7 @@ class FileParser {
             lines = await fs.readFileAndGetLines(statisticsFilePath);
         }
         else {
+            core.debug(`No statisticsFilePath found, starting search...`);
             statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv');
             if (!statisticsFilePath) {
                 throw new Error(`Statistics file '${statisticsFilePath}' does not exist`);
@@ -10014,7 +10025,7 @@ exports["default"] = FileParser;
 
 /***/ }),
 
-/***/ 6642:
+/***/ 6497:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -10138,6 +10149,174 @@ exports.fileExists = fileExists;
 
 /***/ }),
 
+/***/ 1059:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createCommitPRCommentLineSuspiciousnessThreshold = void 0;
+const github = __importStar(__nccwpck_require__(5438));
+const stateHelper = __importStar(__nccwpck_require__(9319));
+async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, parsedLines) {
+    try {
+        let body = '';
+        sflRanking.forEach((algorithm, index) => {
+            const lines = parsedLines
+                .filter(line => line.suspiciousnessMetrics.some(suspiciousnessMetric => suspiciousnessMetric.algorithm === algorithm &&
+                suspiciousnessMetric.suspiciousnessValue >= sflThreshold[index]))
+                .sort((a, b) => b.suspiciousnessMetrics.find(obj => obj.algorithm === algorithm)
+                .suspiciousnessValue -
+                a.suspiciousnessMetrics.find(obj => obj.algorithm === algorithm)
+                    .suspiciousnessValue);
+            if (lines.length > 0) {
+                body += `## ${algorithm.charAt(0).toUpperCase() + algorithm.slice(1)} suspicious lines\n`;
+                body += '|Line | Suspiciousness|';
+                body += '|---|:---:|';
+                lines.forEach(line => {
+                    if (line.method.file.path != undefined) {
+                        body += `|https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentSha}/${line.method.file.path}#L${line.lineNumber}  | ${line.suspiciousnessMetrics.find(obj => obj.algorithm === algorithm).suspiciousnessValue}\n`;
+                    }
+                    else {
+                        body += `|${line.method.file.name}${line.method.name}#L${line.lineNumber}  | ${line.suspiciousnessMetrics.find(obj => obj.algorithm === algorithm).suspiciousnessValue}`;
+                    }
+                });
+                body += '\n\n';
+            }
+        });
+        await createCommitPRComment(authToken, { body });
+    }
+    catch (error) {
+        throw new Error(`Encountered an error when creating Commit/PR comment based on threshold of algorithms: ${error?.message ?? error}`);
+    }
+}
+exports.createCommitPRCommentLineSuspiciousnessThreshold = createCommitPRCommentLineSuspiciousnessThreshold;
+async function createCommitPRComment(authToken, inputs) {
+    const octokit = getOctokit(authToken);
+    await octokit.rest.repos.createCommitComment({
+        owner: stateHelper.repoOwner,
+        repo: stateHelper.repoName,
+        commit_sha: stateHelper.currentSha,
+        body: inputs.body,
+        path: inputs.path,
+        position: inputs.position,
+        line: inputs.line
+    });
+}
+function getOctokit(authToken) {
+    return github.getOctokit(authToken);
+}
+
+
+/***/ }),
+
+/***/ 3256:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getInputs = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+async function getInputs() {
+    const authToken = core.getInput('token', { required: true });
+    const buildPath = core.getInput('build-path', { required: true });
+    const serializedCoverageFilePath = core.getInput('serialized-coverage-file-path');
+    const testCasesFilePath = core.getInput('test-cases-file-path');
+    const spectraFilePath = core.getInput('spectra-file-path');
+    const matrixFilePath = core.getInput('matrix-file-path');
+    const statisticsFilePath = core.getInput('statistics-file-path');
+    let sflRanking = [];
+    try {
+        sflRanking = core
+            .getInput('sfl-ranking', { required: true })
+            .replace(/[|]/g, '')
+            .split(',');
+    }
+    catch (error) {
+        throw new Error('Invalid form of input `sfl-ranking`. It should be a comma separated list of strings.');
+    }
+    let sflThreshold = [];
+    try {
+        sflThreshold = core
+            .getInput('sfl-threshold', { required: true })
+            .replace(/[|]/g, '')
+            .split(',')
+            .map(value => parseInt(value));
+    }
+    catch (error) {
+        throw new Error('Invalid form of input `sfl-threshold`. It should be a comma separated list of numbers.');
+    }
+    if (sflRanking.length !== sflThreshold.length) {
+        throw new Error('The number of elements in `sfl-ranking` and `sfl-threshold` should be the same.');
+    }
+    const uploadArtifacts = core.getInput('upload-artifacts') === 'true';
+    return {
+        authToken: authToken,
+        buildPath: buildPath,
+        serializedCoverageFilePath: serializedCoverageFilePath === ''
+            ? undefined
+            : serializedCoverageFilePath,
+        testCasesFilePath: testCasesFilePath === '' ? undefined : testCasesFilePath,
+        spectraFilePath: spectraFilePath === '' ? undefined : spectraFilePath,
+        matrixFilePath: matrixFilePath === '' ? undefined : matrixFilePath,
+        statisticsFilePath: statisticsFilePath === '' ? undefined : statisticsFilePath,
+        sflRanking: sflRanking,
+        sflThreshold: sflThreshold,
+        uploadArtifacts: uploadArtifacts
+    };
+}
+exports.getInputs = getInputs;
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -10171,18 +10350,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const stateHelper = __importStar(__nccwpck_require__(963));
-const file_parser_1 = __importDefault(__nccwpck_require__(9698));
+const stateHelper = __importStar(__nccwpck_require__(9319));
+const fileParser_1 = __importDefault(__nccwpck_require__(7303));
+const inputHelper = __importStar(__nccwpck_require__(3256));
+const githubActionsHelper_1 = __nccwpck_require__(1059);
 async function run() {
     try {
-        const fileParser = new file_parser_1.default();
-        await fileParser.parse('/Users/paiva/Documents/Tese/gzoltar-feedback-action/build', ['ochiai']);
-        console.log(fileParser.sourceCodeFiles);
-        console.log(fileParser.sourceCodeMethods);
-        console.log(fileParser.sourceCodeLines);
-        console.log(fileParser.statistics);
-        console.log(fileParser.testCases);
-        core.info(`Current SHA: ${stateHelper.currentSha}`);
+        core.debug(`Parsing inputs...`);
+        const inputs = await inputHelper.getInputs();
+        const fileParser = new fileParser_1.default();
+        core.info(`Parsing files...`);
+        await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath);
+        core.info(`Creating commit/PR threshold comment...`);
+        await (0, githubActionsHelper_1.createCommitPRCommentLineSuspiciousnessThreshold)(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, fileParser.sourceCodeLines);
     }
     catch (error) {
         core.setFailed(`${error?.message ?? error}`);
@@ -10195,7 +10375,7 @@ if (!stateHelper.IsPost) {
 
 /***/ }),
 
-/***/ 963:
+/***/ 9319:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -10224,7 +10404,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.rootDirectory = exports.currentSha = exports.IsPost = void 0;
+exports.repoName = exports.repoOwner = exports.rootDirectory = exports.currentSha = exports.IsPost = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 exports.IsPost = !!core.getState('isPost');
@@ -10238,13 +10418,15 @@ function getCurrentSha() {
 }
 exports.currentSha = getCurrentSha();
 function getRootDirectory() {
-    const rootDirectory = process.env.GITHUB_WORKSPACE || '/Users/paiva/Documents/Tese/gzoltar-feedback-action';
+    const rootDirectory = process.env.GITHUB_WORKSPACE;
     if (rootDirectory == undefined) {
         throw new Error('GITHUB_WORKSPACE is not defined');
     }
     return rootDirectory;
 }
 exports.rootDirectory = getRootDirectory();
+exports.repoOwner = github.context.repo.owner;
+exports.repoName = github.context.repo.repo;
 
 
 /***/ }),
