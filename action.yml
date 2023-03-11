@@ -1,4 +1,4 @@
-name: 'GZoltar Feedback
+name: 'GZoltar Feedback'
 description: 'Analyzes GZoltar results and posts a comment on the pull request.'
 inputs:
   token:
@@ -28,12 +28,15 @@ inputs:
   statistics-file-path:
     description: 'Path to the file containing statistics information of the ranking produced by GZoltar. Example: `/build/sfl/txt/statistics.csv`'
     required: false
+  ranking-files-paths:
+    description: 'Path to each SFL ranking algorithms file. Example: `[/build/sfl/txt/ochiai.ranking.csv]`'
+    required: false
   sfl-ranking:
     description: 'List of the SFL ranking algorithms to use separated by `,`. (Keep in mind that each algorithm need to have present a fault localization report file in the `ranking-files-path` directory with his name, i.e. `ochiai.ranking.csv`.)'
-    default: [ochiai]
+    default: '[ochiai]'
   sfl-threshold:
     description: 'Line suspiciousness threshold to trigger an warning. A threshold is needed for each SFL ranking algorithms used'
-    default: [0.5]
+    default: '[0.5]'
   upload-artifacts:
     description: 'Indicates whether to upload the GZoltar results as an artifact'
     default: false

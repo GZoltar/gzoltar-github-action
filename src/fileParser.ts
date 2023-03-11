@@ -22,15 +22,50 @@ export default class FileParser {
   public async parse(
     buildPath: string,
     sflRanking: string[],
+    rankingFilesPaths?: string[],
     testCasesFilePath?: string,
     spectraFilePath?: string,
     matrixFilePath?: string,
     statisticsFilePath?: string
   ) {
+    buildPath = path.join(stateHelper.rootDirectory, buildPath)
+
+    if (rankingFilesPaths) {
+      rankingFilesPaths = rankingFilesPaths.map(rankingFilePath => {
+        return path.join(stateHelper.rootDirectory, rankingFilePath)
+      })
+    }
+
+    if (testCasesFilePath) {
+      testCasesFilePath = path.join(
+        stateHelper.rootDirectory,
+        testCasesFilePath
+      )
+    }
+
+    if (spectraFilePath) {
+      spectraFilePath = path.join(stateHelper.rootDirectory, spectraFilePath)
+    }
+
+    if (matrixFilePath) {
+      matrixFilePath = path.join(stateHelper.rootDirectory, matrixFilePath)
+    }
+
+    if (statisticsFilePath) {
+      statisticsFilePath = path.join(
+        stateHelper.rootDirectory,
+        statisticsFilePath
+      )
+    }
+
     await this.parseTestCases(buildPath, testCasesFilePath)
     await this.parseSpectra(buildPath, spectraFilePath)
-    sflRanking.forEach(async ranking => {
-      await this.parseRanking(buildPath, ranking)
+    sflRanking.forEach(async (ranking, index) => {
+      let rankingFilePath: string | undefined = undefined
+      if (rankingFilesPaths) {
+        rankingFilePath = rankingFilesPaths[index]
+      }
+      await this.parseRanking(buildPath, ranking, rankingFilePath)
     })
     await this.parseMatrix(buildPath, matrixFilePath)
     await this.parseStatistics(buildPath, statisticsFilePath)
@@ -67,10 +102,6 @@ export default class FileParser {
     }
 
     if (testCasesFilePath) {
-      testCasesFilePath = path.join(
-        stateHelper.rootDirectory,
-        testCasesFilePath
-      )
       if (!fs.fileExists(testCasesFilePath!)) {
         throw new Error(`TestCases file '${testCasesFilePath}' does not exist`)
       }
@@ -79,7 +110,7 @@ export default class FileParser {
       testCasesFilePath = fs.searchFile(buildPath, 'tests.csv')
 
       if (!testCasesFilePath) {
-        throw new Error(`TestCases file '${testCasesFilePath}' does not exist`)
+        throw new Error(`TestCases file not found`)
       }
     }
 
@@ -127,7 +158,6 @@ export default class FileParser {
     }
 
     if (spectraFilePath) {
-      spectraFilePath = path.join(stateHelper.rootDirectory, spectraFilePath)
       if (!fs.fileExists(spectraFilePath!)) {
         throw new Error(`spectra file '${spectraFilePath}' does not exist`)
       }
@@ -136,7 +166,7 @@ export default class FileParser {
       spectraFilePath = fs.searchFile(buildPath, 'spectra.csv')
 
       if (!spectraFilePath) {
-        throw new Error(`spectra file '${spectraFilePath}' does not exist`)
+        throw new Error(`Spectra file not found`)
       }
     }
 
@@ -272,7 +302,6 @@ export default class FileParser {
     }
 
     if (rankingFilePath) {
-      rankingFilePath = path.join(stateHelper.rootDirectory, rankingFilePath)
       if (!fs.fileExists(rankingFilePath!)) {
         throw new Error(`ranking file '${rankingFilePath}' does not exist`)
       }
@@ -283,7 +312,7 @@ export default class FileParser {
       rankingFilePath = fs.searchFile(buildPath, `${ranking}.ranking.csv`)
 
       if (!rankingFilePath) {
-        throw new Error(`ranking file '${rankingFilePath}' does not exist`)
+        throw new Error(`Ranking file for ${ranking} not found`)
       }
     }
 
@@ -412,7 +441,6 @@ export default class FileParser {
     }
 
     if (matrixFilePath) {
-      matrixFilePath = path.join(stateHelper.rootDirectory, matrixFilePath)
       if (!fs.fileExists(matrixFilePath!)) {
         throw new Error(`matrix file '${matrixFilePath}' does not exist`)
       }
@@ -421,7 +449,7 @@ export default class FileParser {
       matrixFilePath = fs.searchFile(buildPath, 'matrix.txt')
 
       if (!matrixFilePath) {
-        throw new Error(`matrix file '${matrixFilePath}' does not exist`)
+        throw new Error(`Matrix file not found`)
       }
     }
 
@@ -457,18 +485,18 @@ export default class FileParser {
             case '+':
               if (!this._testCases[rowIndex].passed)
                 throw new Error(
-                  `matrix file '${matrixFilePath}' is inconsistent with test results file`
+                  `Matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
               break
             case '-':
               if (this._testCases[rowIndex].passed)
                 throw new Error(
-                  `matrix file '${matrixFilePath}' is inconsistent with test results file`
+                  `Matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
 
               break
             default:
-              throw new Error(`matrix file '${matrixFilePath}' is invalid`)
+              throw new Error(`Matrix file '${matrixFilePath}' is invalid`)
           }
         })
       })
@@ -494,10 +522,6 @@ export default class FileParser {
     let lines = []
 
     if (statisticsFilePath) {
-      statisticsFilePath = path.join(
-        stateHelper.rootDirectory,
-        statisticsFilePath
-      )
       if (!fs.fileExists(statisticsFilePath!)) {
         throw new Error(
           `Statistics file '${statisticsFilePath}' does not exist`
@@ -510,9 +534,7 @@ export default class FileParser {
       statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv')
 
       if (!statisticsFilePath) {
-        throw new Error(
-          `Statistics file '${statisticsFilePath}' does not exist`
-        )
+        throw new Error(`Statistics file not found`)
       }
 
       lines = await fs.readFileAndGetLines(statisticsFilePath)

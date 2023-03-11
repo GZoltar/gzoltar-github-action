@@ -1,6 +1,4 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
-import * as path from 'path'
 import {IInputs} from './types/inputs'
 
 export async function getInputs(): Promise<IInputs> {
@@ -27,12 +25,28 @@ export async function getInputs(): Promise<IInputs> {
   // Statistics File Path
   const statisticsFilePath: string = core.getInput('statistics-file-path')
 
+  // Ranking Files Paths
+  let rankingFilesPaths: string[] | undefined = undefined
+  try {
+    const rankingFilesPathsString: string = core.getInput('ranking-files-paths')
+
+    if (rankingFilesPathsString !== '') {
+      rankingFilesPaths = rankingFilesPathsString
+        .replace(/\[|\]/g, '')
+        .split(',')
+    }
+  } catch (error) {
+    throw new Error(
+      'Invalid form of input `ranking-files-paths`. It should be a comma separated list of strings.'
+    )
+  }
+
   // SFL Ranking
   let sflRanking: string[] = []
   try {
     sflRanking = core
       .getInput('sfl-ranking', {required: true})
-      .replace(/[|]/g, '')
+      .replace(/\[|\]/g, '')
       .split(',')
   } catch (error) {
     throw new Error(
@@ -45,7 +59,7 @@ export async function getInputs(): Promise<IInputs> {
   try {
     sflThreshold = core
       .getInput('sfl-threshold', {required: true})
-      .replace(/[|]/g, '')
+      .replace(/\[|\]/g, '')
       .split(',')
       .map(value => parseInt(value))
   } catch (error) {
@@ -57,6 +71,12 @@ export async function getInputs(): Promise<IInputs> {
   if (sflRanking.length !== sflThreshold.length) {
     throw new Error(
       'The number of elements in `sfl-ranking` and `sfl-threshold` should be the same.'
+    )
+  }
+
+  if (rankingFilesPaths && sflRanking.length !== rankingFilesPaths.length) {
+    throw new Error(
+      'The number of elements in `sfl-ranking` and `ranking-files-paths` should be the same.'
     )
   }
 
@@ -75,6 +95,7 @@ export async function getInputs(): Promise<IInputs> {
     matrixFilePath: matrixFilePath === '' ? undefined : matrixFilePath,
     statisticsFilePath:
       statisticsFilePath === '' ? undefined : statisticsFilePath,
+    rankingFilesPaths: rankingFilesPaths,
     sflRanking: sflRanking,
     sflThreshold: sflThreshold,
     uploadArtifacts: uploadArtifacts

@@ -9638,11 +9638,33 @@ class FileParser {
         this._testCases = [];
         this._statistics = [];
     }
-    async parse(buildPath, sflRanking, testCasesFilePath, spectraFilePath, matrixFilePath, statisticsFilePath) {
+    async parse(buildPath, sflRanking, rankingFilesPaths, testCasesFilePath, spectraFilePath, matrixFilePath, statisticsFilePath) {
+        buildPath = path.join(stateHelper.rootDirectory, buildPath);
+        if (rankingFilesPaths) {
+            rankingFilesPaths = rankingFilesPaths.map(rankingFilePath => {
+                return path.join(stateHelper.rootDirectory, rankingFilePath);
+            });
+        }
+        if (testCasesFilePath) {
+            testCasesFilePath = path.join(stateHelper.rootDirectory, testCasesFilePath);
+        }
+        if (spectraFilePath) {
+            spectraFilePath = path.join(stateHelper.rootDirectory, spectraFilePath);
+        }
+        if (matrixFilePath) {
+            matrixFilePath = path.join(stateHelper.rootDirectory, matrixFilePath);
+        }
+        if (statisticsFilePath) {
+            statisticsFilePath = path.join(stateHelper.rootDirectory, statisticsFilePath);
+        }
         await this.parseTestCases(buildPath, testCasesFilePath);
         await this.parseSpectra(buildPath, spectraFilePath);
-        sflRanking.forEach(async (ranking) => {
-            await this.parseRanking(buildPath, ranking);
+        sflRanking.forEach(async (ranking, index) => {
+            let rankingFilePath = undefined;
+            if (rankingFilesPaths) {
+                rankingFilePath = rankingFilesPaths[index];
+            }
+            await this.parseRanking(buildPath, ranking, rankingFilePath);
         });
         await this.parseMatrix(buildPath, matrixFilePath);
         await this.parseStatistics(buildPath, statisticsFilePath);
@@ -9668,7 +9690,6 @@ class FileParser {
             throw new Error("Arg 'buildPath' must not be empty");
         }
         if (testCasesFilePath) {
-            testCasesFilePath = path.join(stateHelper.rootDirectory, testCasesFilePath);
             if (!fs.fileExists(testCasesFilePath)) {
                 throw new Error(`TestCases file '${testCasesFilePath}' does not exist`);
             }
@@ -9677,7 +9698,7 @@ class FileParser {
             core.debug(`No testCasesFilePath found, starting search...`);
             testCasesFilePath = fs.searchFile(buildPath, 'tests.csv');
             if (!testCasesFilePath) {
-                throw new Error(`TestCases file '${testCasesFilePath}' does not exist`);
+                throw new Error(`TestCases file not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(testCasesFilePath);
@@ -9713,7 +9734,6 @@ class FileParser {
             throw new Error("Arg 'buildPath' must not be empty");
         }
         if (spectraFilePath) {
-            spectraFilePath = path.join(stateHelper.rootDirectory, spectraFilePath);
             if (!fs.fileExists(spectraFilePath)) {
                 throw new Error(`spectra file '${spectraFilePath}' does not exist`);
             }
@@ -9722,7 +9742,7 @@ class FileParser {
             core.debug(`No spectraFilePath found, starting search...`);
             spectraFilePath = fs.searchFile(buildPath, 'spectra.csv');
             if (!spectraFilePath) {
-                throw new Error(`spectra file '${spectraFilePath}' does not exist`);
+                throw new Error(`Spectra file not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(spectraFilePath);
@@ -9818,7 +9838,6 @@ class FileParser {
             throw new Error('Ranking files can only be parsed after spectra file is parsed');
         }
         if (rankingFilePath) {
-            rankingFilePath = path.join(stateHelper.rootDirectory, rankingFilePath);
             if (!fs.fileExists(rankingFilePath)) {
                 throw new Error(`ranking file '${rankingFilePath}' does not exist`);
             }
@@ -9827,7 +9846,7 @@ class FileParser {
             core.debug(`No rankingFilePath for ranking ${ranking} found, starting search...`);
             rankingFilePath = fs.searchFile(buildPath, `${ranking}.ranking.csv`);
             if (!rankingFilePath) {
-                throw new Error(`ranking file '${rankingFilePath}' does not exist`);
+                throw new Error(`Ranking file for ${ranking} not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(rankingFilePath);
@@ -9919,7 +9938,6 @@ class FileParser {
             throw new Error('Matrix can only be parsed after spectra file is parsed');
         }
         if (matrixFilePath) {
-            matrixFilePath = path.join(stateHelper.rootDirectory, matrixFilePath);
             if (!fs.fileExists(matrixFilePath)) {
                 throw new Error(`matrix file '${matrixFilePath}' does not exist`);
             }
@@ -9928,7 +9946,7 @@ class FileParser {
             core.debug(`No matrixFilePath found, starting search...`);
             matrixFilePath = fs.searchFile(buildPath, 'matrix.txt');
             if (!matrixFilePath) {
-                throw new Error(`matrix file '${matrixFilePath}' does not exist`);
+                throw new Error(`Matrix file not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(matrixFilePath);
@@ -9957,14 +9975,14 @@ class FileParser {
                             break;
                         case '+':
                             if (!this._testCases[rowIndex].passed)
-                                throw new Error(`matrix file '${matrixFilePath}' is inconsistent with test results file`);
+                                throw new Error(`Matrix file '${matrixFilePath}' is inconsistent with test results file`);
                             break;
                         case '-':
                             if (this._testCases[rowIndex].passed)
-                                throw new Error(`matrix file '${matrixFilePath}' is inconsistent with test results file`);
+                                throw new Error(`Matrix file '${matrixFilePath}' is inconsistent with test results file`);
                             break;
                         default:
-                            throw new Error(`matrix file '${matrixFilePath}' is invalid`);
+                            throw new Error(`Matrix file '${matrixFilePath}' is invalid`);
                     }
                 });
             });
@@ -9981,7 +9999,6 @@ class FileParser {
         }
         let lines = [];
         if (statisticsFilePath) {
-            statisticsFilePath = path.join(stateHelper.rootDirectory, statisticsFilePath);
             if (!fs.fileExists(statisticsFilePath)) {
                 throw new Error(`Statistics file '${statisticsFilePath}' does not exist`);
             }
@@ -9991,7 +10008,7 @@ class FileParser {
             core.debug(`No statisticsFilePath found, starting search...`);
             statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv');
             if (!statisticsFilePath) {
-                throw new Error(`Statistics file '${statisticsFilePath}' does not exist`);
+                throw new Error(`Statistics file not found`);
             }
             lines = await fs.readFileAndGetLines(statisticsFilePath);
         }
@@ -10272,11 +10289,23 @@ async function getInputs() {
     const spectraFilePath = core.getInput('spectra-file-path');
     const matrixFilePath = core.getInput('matrix-file-path');
     const statisticsFilePath = core.getInput('statistics-file-path');
+    let rankingFilesPaths = undefined;
+    try {
+        const rankingFilesPathsString = core.getInput('ranking-files-paths');
+        if (rankingFilesPathsString !== '') {
+            rankingFilesPaths = rankingFilesPathsString
+                .replace(/\[|\]/g, '')
+                .split(',');
+        }
+    }
+    catch (error) {
+        throw new Error('Invalid form of input `ranking-files-paths`. It should be a comma separated list of strings.');
+    }
     let sflRanking = [];
     try {
         sflRanking = core
             .getInput('sfl-ranking', { required: true })
-            .replace(/[|]/g, '')
+            .replace(/\[|\]/g, '')
             .split(',');
     }
     catch (error) {
@@ -10286,7 +10315,7 @@ async function getInputs() {
     try {
         sflThreshold = core
             .getInput('sfl-threshold', { required: true })
-            .replace(/[|]/g, '')
+            .replace(/\[|\]/g, '')
             .split(',')
             .map(value => parseInt(value));
     }
@@ -10295,6 +10324,9 @@ async function getInputs() {
     }
     if (sflRanking.length !== sflThreshold.length) {
         throw new Error('The number of elements in `sfl-ranking` and `sfl-threshold` should be the same.');
+    }
+    if (rankingFilesPaths && sflRanking.length !== rankingFilesPaths.length) {
+        throw new Error('The number of elements in `sfl-ranking` and `ranking-files-paths` should be the same.');
     }
     const uploadArtifacts = core.getInput('upload-artifacts') === 'true';
     return {
@@ -10307,6 +10339,7 @@ async function getInputs() {
         spectraFilePath: spectraFilePath === '' ? undefined : spectraFilePath,
         matrixFilePath: matrixFilePath === '' ? undefined : matrixFilePath,
         statisticsFilePath: statisticsFilePath === '' ? undefined : statisticsFilePath,
+        rankingFilesPaths: rankingFilesPaths,
         sflRanking: sflRanking,
         sflThreshold: sflThreshold,
         uploadArtifacts: uploadArtifacts
@@ -10360,7 +10393,7 @@ async function run() {
         const inputs = await inputHelper.getInputs();
         const fileParser = new fileParser_1.default();
         core.info(`Parsing files...`);
-        await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath);
+        await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath);
         core.info(`Creating commit/PR threshold comment...`);
         await (0, githubActionsHelper_1.createCommitPRCommentLineSuspiciousnessThreshold)(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, fileParser.sourceCodeLines);
     }
