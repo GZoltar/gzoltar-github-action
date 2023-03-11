@@ -210,12 +210,16 @@ export default class FileParser {
         })
 
         if (!sourceCodeFile) {
-          const filePath = fs.searchFile(
+          let filePath = fs.searchFile(
             stateHelper.rootDirectory,
             `${className}.java`,
             true,
-            packageName
+            packageName,
+            buildPath
           )
+          if (filePath) {
+            filePath = filePath.substring(stateHelper.rootDirectory.length)
+          }
           sourceCodeFile = {
             name: className,
             packageName: packageName,

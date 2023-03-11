@@ -52,14 +52,15 @@ export function searchFile(
   dir: string,
   fileName: string,
   classFileMode?: boolean,
-  packageName?: string
+  packageName?: string,
+  buildPathToExclude?: string
 ): string | undefined {
   if (classFileMode && !packageName) {
     throw new Error(
       'Arg mismatch. If classFileMode is true, packageName must be present'
     )
   }
-
+  //TODO
   try {
     const files = fs.readdirSync(dir)
     for (const file of files) {
