@@ -9698,7 +9698,7 @@ class FileParser {
             core.debug(`No testCasesFilePath found, starting search...`);
             testCasesFilePath = fs.searchFile(buildPath, 'tests.csv');
             if (!testCasesFilePath) {
-                throw new Error(`TestCases file '${testCasesFilePath}' does not exist`);
+                throw new Error(`TestCases file not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(testCasesFilePath);
@@ -9742,7 +9742,7 @@ class FileParser {
             core.debug(`No spectraFilePath found, starting search...`);
             spectraFilePath = fs.searchFile(buildPath, 'spectra.csv');
             if (!spectraFilePath) {
-                throw new Error(`spectra file '${spectraFilePath}' does not exist`);
+                throw new Error(`Spectra file not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(spectraFilePath);
@@ -9846,7 +9846,7 @@ class FileParser {
             core.debug(`No rankingFilePath for ranking ${ranking} found, starting search...`);
             rankingFilePath = fs.searchFile(buildPath, `${ranking}.ranking.csv`);
             if (!rankingFilePath) {
-                throw new Error(`ranking file '${rankingFilePath}' does not exist`);
+                throw new Error(`Ranking file for ${ranking} not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(rankingFilePath);
@@ -9946,7 +9946,7 @@ class FileParser {
             core.debug(`No matrixFilePath found, starting search...`);
             matrixFilePath = fs.searchFile(buildPath, 'matrix.txt');
             if (!matrixFilePath) {
-                throw new Error(`matrix file '${matrixFilePath}' does not exist`);
+                throw new Error(`Matrix file not found`);
             }
         }
         const lines = await fs.readFileAndGetLines(matrixFilePath);
@@ -9975,14 +9975,14 @@ class FileParser {
                             break;
                         case '+':
                             if (!this._testCases[rowIndex].passed)
-                                throw new Error(`matrix file '${matrixFilePath}' is inconsistent with test results file`);
+                                throw new Error(`Matrix file '${matrixFilePath}' is inconsistent with test results file`);
                             break;
                         case '-':
                             if (this._testCases[rowIndex].passed)
-                                throw new Error(`matrix file '${matrixFilePath}' is inconsistent with test results file`);
+                                throw new Error(`Matrix file '${matrixFilePath}' is inconsistent with test results file`);
                             break;
                         default:
-                            throw new Error(`matrix file '${matrixFilePath}' is invalid`);
+                            throw new Error(`Matrix file '${matrixFilePath}' is invalid`);
                     }
                 });
             });
@@ -10008,7 +10008,7 @@ class FileParser {
             core.debug(`No statisticsFilePath found, starting search...`);
             statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv');
             if (!statisticsFilePath) {
-                throw new Error(`Statistics file '${statisticsFilePath}' does not exist`);
+                throw new Error(`Statistics file not found`);
             }
             lines = await fs.readFileAndGetLines(statisticsFilePath);
         }

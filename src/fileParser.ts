@@ -110,7 +110,7 @@ export default class FileParser {
       testCasesFilePath = fs.searchFile(buildPath, 'tests.csv')
 
       if (!testCasesFilePath) {
-        throw new Error(`TestCases file '${testCasesFilePath}' does not exist`)
+        throw new Error(`TestCases file not found`)
       }
     }
 
@@ -166,7 +166,7 @@ export default class FileParser {
       spectraFilePath = fs.searchFile(buildPath, 'spectra.csv')
 
       if (!spectraFilePath) {
-        throw new Error(`spectra file '${spectraFilePath}' does not exist`)
+        throw new Error(`Spectra file not found`)
       }
     }
 
@@ -312,7 +312,7 @@ export default class FileParser {
       rankingFilePath = fs.searchFile(buildPath, `${ranking}.ranking.csv`)
 
       if (!rankingFilePath) {
-        throw new Error(`ranking file '${rankingFilePath}' does not exist`)
+        throw new Error(`Ranking file for ${ranking} not found`)
       }
     }
 
@@ -449,7 +449,7 @@ export default class FileParser {
       matrixFilePath = fs.searchFile(buildPath, 'matrix.txt')
 
       if (!matrixFilePath) {
-        throw new Error(`matrix file '${matrixFilePath}' does not exist`)
+        throw new Error(`Matrix file not found`)
       }
     }
 
@@ -485,18 +485,18 @@ export default class FileParser {
             case '+':
               if (!this._testCases[rowIndex].passed)
                 throw new Error(
-                  `matrix file '${matrixFilePath}' is inconsistent with test results file`
+                  `Matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
               break
             case '-':
               if (this._testCases[rowIndex].passed)
                 throw new Error(
-                  `matrix file '${matrixFilePath}' is inconsistent with test results file`
+                  `Matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
 
               break
             default:
-              throw new Error(`matrix file '${matrixFilePath}' is invalid`)
+              throw new Error(`Matrix file '${matrixFilePath}' is invalid`)
           }
         })
       })
@@ -534,9 +534,7 @@ export default class FileParser {
       statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv')
 
       if (!statisticsFilePath) {
-        throw new Error(
-          `Statistics file '${statisticsFilePath}' does not exist`
-        )
+        throw new Error(`Statistics file not found`)
       }
 
       lines = await fs.readFileAndGetLines(statisticsFilePath)
