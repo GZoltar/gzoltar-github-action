@@ -10194,8 +10194,8 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                     .suspiciousnessValue);
             if (lines.length > 0) {
                 body += `## ${algorithm.charAt(0).toUpperCase() + algorithm.slice(1)} suspicious lines\n`;
-                body += '|Line | Suspiciousness|';
-                body += '|---|:---:|';
+                body += '|Line | Suspiciousness|\n';
+                body += '|---|:---:|\n';
                 lines.forEach(line => {
                     if (line.method.file.path != undefined) {
                         body += `|https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentSha}/${line.method.file.path}#L${line.lineNumber}  | ${line.suspiciousnessMetrics.find(obj => obj.algorithm === algorithm).suspiciousnessValue}\n`;

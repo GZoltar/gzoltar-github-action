@@ -32,8 +32,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
         body += `## ${
           algorithm.charAt(0).toUpperCase() + algorithm.slice(1)
         } suspicious lines\n`
-        body += '|Line | Suspiciousness|'
-        body += '|---|:---:|'
+        body += '|Line | Suspiciousness|\n'
+        body += '|---|:---:|\n'
         lines.forEach(line => {
           if (line.method.file.path != undefined) {
             body += `|https://github.com/${stateHelper.repoOwner}/${
