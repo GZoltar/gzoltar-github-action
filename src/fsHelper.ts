@@ -53,14 +53,14 @@ export function searchFile(
   fileName: string,
   classFileMode?: boolean,
   packageName?: string,
-  buildPathToExclude?: string
+  directoryPathToExclude?: string
 ): string | undefined {
   if (classFileMode && !packageName) {
     throw new Error(
       'Arg mismatch. If classFileMode is true, packageName must be present'
     )
   }
-  //TODO
+
   try {
     const files = fs.readdirSync(dir)
     for (const file of files) {
@@ -69,6 +69,12 @@ export function searchFile(
       const fileStat = fs.statSync(filePath)
 
       if (fileStat.isDirectory()) {
+        if (
+          directoryPathToExclude &&
+          filePath.includes(directoryPathToExclude)
+        ) {
+          continue
+        }
         files.push(
           ...fs
             .readdirSync(filePath)

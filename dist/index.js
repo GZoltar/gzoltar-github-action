@@ -10093,7 +10093,7 @@ async function readFileAndGetLines(path) {
     }
 }
 exports.readFileAndGetLines = readFileAndGetLines;
-function searchFile(dir, fileName, classFileMode, packageName, buildPathToExclude) {
+function searchFile(dir, fileName, classFileMode, packageName, directoryPathToExclude) {
     if (classFileMode && !packageName) {
         throw new Error('Arg mismatch. If classFileMode is true, packageName must be present');
     }
@@ -10103,6 +10103,10 @@ function searchFile(dir, fileName, classFileMode, packageName, buildPathToExclud
             const filePath = path.join(dir, file);
             const fileStat = fs.statSync(filePath);
             if (fileStat.isDirectory()) {
+                if (directoryPathToExclude &&
+                    filePath.includes(directoryPathToExclude)) {
+                    continue;
+                }
                 files.push(...fs
                     .readdirSync(filePath)
                     .map((item) => path.join(file, item)));
