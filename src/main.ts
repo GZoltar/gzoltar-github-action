@@ -16,6 +16,7 @@ async function run(): Promise<void> {
     await fileParser.parse(
       inputs.buildPath,
       inputs.sflRanking,
+      inputs.rankingFilesPaths,
       inputs.testCasesFilePath,
       inputs.spectraFilePath,
       inputs.matrixFilePath,
