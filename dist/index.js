@@ -10293,7 +10293,9 @@ async function getInputs() {
     try {
         const rankingFilesPathsString = core.getInput('ranking-files-paths');
         if (rankingFilesPathsString !== '') {
-            rankingFilesPaths = rankingFilesPathsString.replace(/[|]/g, '').split(',');
+            rankingFilesPaths = rankingFilesPathsString
+                .replace(/\[|\]/g, '')
+                .split(',');
         }
     }
     catch (error) {
@@ -10303,7 +10305,7 @@ async function getInputs() {
     try {
         sflRanking = core
             .getInput('sfl-ranking', { required: true })
-            .replace(/[|]/g, '')
+            .replace(/\[|\]/g, '')
             .split(',');
     }
     catch (error) {
@@ -10313,7 +10315,7 @@ async function getInputs() {
     try {
         sflThreshold = core
             .getInput('sfl-threshold', { required: true })
-            .replace(/[|]/g, '')
+            .replace(/\[|\]/g, '')
             .split(',')
             .map(value => parseInt(value));
     }

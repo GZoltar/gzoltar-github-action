@@ -31,7 +31,9 @@ export async function getInputs(): Promise<IInputs> {
     const rankingFilesPathsString: string = core.getInput('ranking-files-paths')
 
     if (rankingFilesPathsString !== '') {
-      rankingFilesPaths = rankingFilesPathsString.replace(/\[|\]/g, '').split(',')
+      rankingFilesPaths = rankingFilesPathsString
+        .replace(/\[|\]/g, '')
+        .split(',')
     }
   } catch (error) {
     throw new Error(
