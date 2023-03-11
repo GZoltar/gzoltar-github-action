@@ -1,0 +1,11 @@
+name: Test Action
+on:
+  push:
+    branches: [test/only-comment-threshold]
+
+jobs:
+  test:
+    steps:
+      - uses: 'actions/checkout@v3'
+      - name: Create commit comment
+        uses: hugofpaiva/gzoltar-feedback-action@main

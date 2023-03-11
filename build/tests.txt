@@ -1,0 +1,7 @@
+JUNIT,org.gzoltar.examples.CharacterCounterTest#test1
+JUNIT,org.gzoltar.examples.CharacterCounterTest#test2
+JUNIT,org.gzoltar.examples.CharacterCounterTest#test3
+JUNIT,org.gzoltar.examples.CharacterCounterTest#test4
+JUNIT,org.gzoltar.examples.CharacterCounterTest#test5
+JUNIT,org.gzoltar.examples.CharacterCounterTest#test7
+JUNIT,org.gzoltar.examples.CharacterCounterTest#test8
