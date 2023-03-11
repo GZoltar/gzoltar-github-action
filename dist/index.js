@@ -10324,7 +10324,7 @@ async function getInputs() {
             .getInput('sfl-threshold', { required: true })
             .replace(/\[|\]/g, '')
             .split(',')
-            .map(value => parseInt(value));
+            .map(value => parseFloat(value));
     }
     catch (error) {
         throw new Error('Invalid form of input `sfl-threshold`. It should be a comma separated list of numbers.');

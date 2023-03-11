@@ -12,7 +12,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
   try {
     let body = ''
     sflRanking.forEach((algorithm, index) => {
-      // check if every line suspiciousnessMetrics always contains the same length of algorithms. If yes, I could just use the index
+      // TODO check if every line suspiciousnessMetrics always contains the same length of algorithms. If yes, I could just use the index
       const lines = parsedLines
         .filter(line =>
           line.suspiciousnessMetrics.some(
