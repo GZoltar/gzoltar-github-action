@@ -31,7 +31,7 @@ export async function getInputs(): Promise<IInputs> {
     const rankingFilesPathsString: string = core.getInput('ranking-files-paths')
 
     if (rankingFilesPathsString !== '') {
-      rankingFilesPaths = rankingFilesPathsString.replace(/[|]/g, '').split(',')
+      rankingFilesPaths = rankingFilesPathsString.replace(/\[|\]/g, '').split(',')
     }
   } catch (error) {
     throw new Error(
@@ -44,7 +44,7 @@ export async function getInputs(): Promise<IInputs> {
   try {
     sflRanking = core
       .getInput('sfl-ranking', {required: true})
-      .replace(/[|]/g, '')
+      .replace(/\[|\]/g, '')
       .split(',')
   } catch (error) {
     throw new Error(
@@ -57,7 +57,7 @@ export async function getInputs(): Promise<IInputs> {
   try {
     sflThreshold = core
       .getInput('sfl-threshold', {required: true})
-      .replace(/[|]/g, '')
+      .replace(/\[|\]/g, '')
       .split(',')
       .map(value => parseInt(value))
   } catch (error) {
