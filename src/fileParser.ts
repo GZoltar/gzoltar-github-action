@@ -61,7 +61,7 @@ export default class FileParser {
     await this.parseTestCases(buildPath, testCasesFilePath)
     await this.parseSpectra(buildPath, spectraFilePath)
     sflRanking.forEach(async (ranking, index) => {
-      let rankingFilePath: string | undefined
+      let rankingFilePath: string | undefined = undefined
       if (rankingFilesPaths) {
         rankingFilePath = rankingFilesPaths[index]
       }
