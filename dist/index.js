@@ -9776,7 +9776,10 @@ class FileParser {
                     return false;
                 });
                 if (!sourceCodeFile) {
-                    const filePath = fs.searchFile(stateHelper.rootDirectory, `${className}.java`, true, packageName);
+                    let filePath = fs.searchFile(stateHelper.rootDirectory, `${className}.java`, true, packageName, buildPath);
+                    if (filePath) {
+                        filePath = filePath.substring(stateHelper.rootDirectory.length);
+                    }
                     sourceCodeFile = {
                         name: className,
                         packageName: packageName,
@@ -10090,7 +10093,7 @@ async function readFileAndGetLines(path) {
     }
 }
 exports.readFileAndGetLines = readFileAndGetLines;
-function searchFile(dir, fileName, classFileMode, packageName) {
+function searchFile(dir, fileName, classFileMode, packageName, buildPathToExclude) {
     if (classFileMode && !packageName) {
         throw new Error('Arg mismatch. If classFileMode is true, packageName must be present');
     }
