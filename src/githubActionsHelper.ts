@@ -43,7 +43,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
             }  | ${
               line.suspiciousnessMetrics.find(
                 obj => obj.algorithm === algorithm
-              )!.suspiciousnessValue
+              )!.suspiciousnessValue.toFixed(2)
             }|\n`
           } else {
             body += `|${line.method.file.name}$${line.method.name}#L${
@@ -51,7 +51,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
             }  | ${
               line.suspiciousnessMetrics.find(
                 obj => obj.algorithm === algorithm
-              )!.suspiciousnessValue
+              )!.suspiciousnessValue.toFixed(2)
             }|\n`
           }
         })
