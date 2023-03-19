@@ -16,6 +16,7 @@ export default class FileParser {
   private _sourceCodeLines: ISourceCodeLine[] = []
   private _testCases: ITestCase[] = []
   private _statistics: IStatistic[] = []
+  private _filesPaths: string[] = []
 
   constructor() {}
 
@@ -91,6 +92,10 @@ export default class FileParser {
     return this._statistics
   }
 
+  public get filePaths(): string[] {
+    return this._filesPaths
+  }
+
   private async parseTestCases(
     buildPath: string,
     testCasesFilePath?: string
@@ -113,6 +118,9 @@ export default class FileParser {
         throw new Error(`TestCases file not found`)
       }
     }
+
+    core.debug(`TestCases file found: '${testCasesFilePath}'`)
+    this._filesPaths.push(testCasesFilePath)
 
     const lines = await fs.readFileAndGetLines(testCasesFilePath!)
 
@@ -169,6 +177,9 @@ export default class FileParser {
         throw new Error(`Spectra file not found`)
       }
     }
+
+    core.debug(`Spectra file found: '${spectraFilePath}'`)
+    this._filesPaths.push(spectraFilePath)
 
     const lines = await fs.readFileAndGetLines(spectraFilePath!)
     try {
@@ -320,6 +331,9 @@ export default class FileParser {
       }
     }
 
+    core.debug(`Ranking file found: '${rankingFilePath}'`)
+    this._filesPaths.push(rankingFilePath)
+
     const lines = await fs.readFileAndGetLines(rankingFilePath!)
 
     try {
@@ -457,6 +471,9 @@ export default class FileParser {
       }
     }
 
+    core.debug(`Matrix file found: '${matrixFilePath}'`)
+    this._filesPaths.push(matrixFilePath)
+
     const lines = await fs.readFileAndGetLines(matrixFilePath!)
 
     if (lines.length != this._testCases.length) {
@@ -523,16 +540,12 @@ export default class FileParser {
       throw new Error("Arg 'buildPath' must not be empty")
     }
 
-    let lines = []
-
     if (statisticsFilePath) {
       if (!fs.fileExists(statisticsFilePath!)) {
         throw new Error(
           `Statistics file '${statisticsFilePath}' does not exist`
         )
       }
-
-      lines = await fs.readFileAndGetLines(statisticsFilePath!)
     } else {
       core.debug(`No statisticsFilePath found, starting search...`)
       statisticsFilePath = fs.searchFile(buildPath, 'statistics.csv')
@@ -540,9 +553,12 @@ export default class FileParser {
       if (!statisticsFilePath) {
         throw new Error(`Statistics file not found`)
       }
-
-      lines = await fs.readFileAndGetLines(statisticsFilePath)
     }
+
+    core.debug(`Statistics file found: '${statisticsFilePath}'`)
+    this._filesPaths.push(statisticsFilePath)
+
+    const lines = await fs.readFileAndGetLines(statisticsFilePath!)
 
     let statistics: IStatistic[] = []
     try {

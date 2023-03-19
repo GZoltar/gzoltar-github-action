@@ -3,7 +3,7 @@ import * as core from '@actions/core'
 import * as stateHelper from './stateHelper'
 import FileParser from './fileParser'
 import * as inputHelper from './inputHelper'
-import {createCommitPRCommentLineSuspiciousnessThreshold} from './githubActionsHelper'
+import * as githubActionsHelper from './githubActionsHelper'
 
 async function run(): Promise<void> {
   try {
@@ -24,12 +24,20 @@ async function run(): Promise<void> {
     )
 
     core.info(`Creating commit/PR threshold comment...`)
-    await createCommitPRCommentLineSuspiciousnessThreshold(
+    await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(
       inputs.authToken,
       inputs.sflRanking,
       inputs.sflThreshold,
       fileParser.sourceCodeLines
     )
+
+    if (inputs.uploadArtifacts) {
+      core.info(`Uploading artifacts...`)
+      await githubActionsHelper.uploadArtifacts(
+        'GZoltar Results',
+        fileParser.filePaths
+      )
+    }
   } catch (error) {
     core.setFailed(`${(error as any)?.message ?? error}`)
   }

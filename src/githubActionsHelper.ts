@@ -1,4 +1,6 @@
 import * as github from '@actions/github'
+import * as artifact from '@actions/artifact'
+import * as core from '@actions/core'
 
 import * as stateHelper from './stateHelper'
 import {ISourceCodeLine} from './types/sourceCodeLine'
@@ -40,19 +42,15 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
               stateHelper.repoName
             }/blob/${stateHelper.currentSha}${line.method.file.path}#L${
               line.lineNumber
-            }  | ${
-              line.suspiciousnessMetrics.find(
-                obj => obj.algorithm === algorithm
-              )!.suspiciousnessValue.toFixed(2)
-            }|\n`
+            }  | ${line.suspiciousnessMetrics
+              .find(obj => obj.algorithm === algorithm)!
+              .suspiciousnessValue.toFixed(2)}|\n`
           } else {
             body += `|${line.method.file.name}$${line.method.name}#L${
               line.lineNumber
-            }  | ${
-              line.suspiciousnessMetrics.find(
-                obj => obj.algorithm === algorithm
-              )!.suspiciousnessValue.toFixed(2)
-            }|\n`
+            }  | ${line.suspiciousnessMetrics
+              .find(obj => obj.algorithm === algorithm)!
+              .suspiciousnessValue.toFixed(2)}|\n`
           }
         })
 
@@ -88,4 +86,37 @@ async function createCommitPRComment(
 
 function getOctokit(authToken: string) {
   return github.getOctokit(authToken)
+}
+
+export async function uploadArtifacts(
+  artifactName: string,
+  filesPaths: string[]
+) {
+  try {
+    const artifactClient = artifact.create()
+
+    const rootDirectory = stateHelper.rootDirectory
+
+    const options: artifact.UploadOptions = {
+      continueOnError: true
+    }
+
+    const uploadResult: artifact.UploadResponse =
+      await artifactClient.uploadArtifact(
+        artifactName,
+        filesPaths,
+        rootDirectory,
+        options
+      )
+
+    if (uploadResult.failedItems.length > 0) {
+      core.error(`Failed to upload some artifacts: ${uploadResult.failedItems}`)
+    }
+  } catch (error) {
+    throw new Error(
+      `Encountered an error when uploading artifacts: ${
+        (error as any)?.message ?? error
+      }`
+    )
+  }
 }
