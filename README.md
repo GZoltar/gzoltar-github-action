@@ -21,7 +21,7 @@ Analyzes GZoltar results and posts a comment on the pull request/commit with the
 
 ## Usage
 
-Executing remote ssh commands.
+Executing automatic feedback action after GZoltar fault-localization 
 
 ```yaml
 name: GZoltar Fault Localization
