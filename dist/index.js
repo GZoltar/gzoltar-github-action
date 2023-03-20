@@ -16351,7 +16351,7 @@ class FileParser {
         this._statistics = [];
         this._filesPaths = [];
     }
-    async parse(buildPath, sflRanking, rankingFilesPaths, testCasesFilePath, spectraFilePath, matrixFilePath, statisticsFilePath) {
+    async parse(buildPath, sflRanking, rankingFilesPaths, testCasesFilePath, spectraFilePath, matrixFilePath, statisticsFilePath, serializedCoverageFilePath) {
         buildPath = path.join(stateHelper.rootDirectory, buildPath);
         if (rankingFilesPaths) {
             rankingFilesPaths = rankingFilesPaths.map(rankingFilePath => {
@@ -16381,6 +16381,7 @@ class FileParser {
         });
         await this.parseMatrix(buildPath, matrixFilePath);
         await this.parseStatistics(buildPath, statisticsFilePath);
+        this.findSerializedCoverageFile(buildPath, serializedCoverageFilePath);
     }
     get sourceCodeFiles() {
         return this._sourceCodeFiles;
@@ -16762,6 +16763,29 @@ class FileParser {
         catch (error) {
             throw new Error(`Encountered an error when parsing statistics file '${statisticsFilePath}': ${error?.message ?? error}`);
         }
+    }
+    findSerializedCoverageFile(buildPath, serializedCoverageFilePath) {
+        core.info(`Finding Serialized Coverage File...`);
+        if (!buildPath) {
+            throw new Error("Arg 'buildPath' must not be empty");
+        }
+        if (serializedCoverageFilePath) {
+            if (!fs.fileExists(serializedCoverageFilePath)) {
+                core.error(`Serialized Coverage file '${serializedCoverageFilePath}' does not exist`);
+                return null;
+            }
+        }
+        else {
+            core.debug(`No serializedCoverageFilePath found, starting search...`);
+            serializedCoverageFilePath = fs.searchFile(buildPath, 'gzoltar.ser');
+            if (!serializedCoverageFilePath) {
+                core.error(`Serialized Coverage file not found`);
+                return null;
+            }
+        }
+        core.debug(`Serialized Coverage file found: '${serializedCoverageFilePath}'`);
+        this._filesPaths.push(serializedCoverageFilePath);
+        return serializedCoverageFilePath;
     }
 }
 exports["default"] = FileParser;
@@ -17147,7 +17171,7 @@ async function run() {
         const inputs = await inputHelper.getInputs();
         const fileParser = new fileParser_1.default();
         core.info(`Parsing files...`);
-        await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath);
+        await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath, inputs.serializedCoverageFilePath);
         core.info(`Creating commit/PR threshold comment...`);
         await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, fileParser.sourceCodeLines);
         if (inputs.uploadArtifacts) {
