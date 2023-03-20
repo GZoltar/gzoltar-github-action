@@ -17073,6 +17073,7 @@ async function getInputs() {
         if (rankingFilesPathsString !== '') {
             rankingFilesPaths = rankingFilesPathsString
                 .replace(/\[|\]/g, '')
+                .replace(/\s+/g, '')
                 .split(',');
         }
     }
@@ -17084,6 +17085,7 @@ async function getInputs() {
         sflRanking = core
             .getInput('sfl-ranking', { required: true })
             .replace(/\[|\]/g, '')
+            .replace(/\s+/g, '')
             .split(',');
     }
     catch (error) {
@@ -17094,6 +17096,7 @@ async function getInputs() {
         sflThreshold = core
             .getInput('sfl-threshold', { required: true })
             .replace(/\[|\]/g, '')
+            .replace(/\s+/g, '')
             .split(',')
             .map(value => parseFloat(value));
     }
