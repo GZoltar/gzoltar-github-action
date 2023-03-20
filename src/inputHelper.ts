@@ -33,6 +33,7 @@ export async function getInputs(): Promise<IInputs> {
     if (rankingFilesPathsString !== '') {
       rankingFilesPaths = rankingFilesPathsString
         .replace(/\[|\]/g, '')
+        .replace(/\s+/g, '')
         .split(',')
     }
   } catch (error) {
@@ -47,6 +48,7 @@ export async function getInputs(): Promise<IInputs> {
     sflRanking = core
       .getInput('sfl-ranking', {required: true})
       .replace(/\[|\]/g, '')
+      .replace(/\s+/g, '')
       .split(',')
   } catch (error) {
     throw new Error(
@@ -60,6 +62,7 @@ export async function getInputs(): Promise<IInputs> {
     sflThreshold = core
       .getInput('sfl-threshold', {required: true})
       .replace(/\[|\]/g, '')
+      .replace(/\s+/g, '')
       .split(',')
       .map(value => parseFloat(value))
   } catch (error) {
