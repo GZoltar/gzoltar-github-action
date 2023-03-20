@@ -20,7 +20,8 @@ async function run(): Promise<void> {
       inputs.testCasesFilePath,
       inputs.spectraFilePath,
       inputs.matrixFilePath,
-      inputs.statisticsFilePath
+      inputs.statisticsFilePath,
+      inputs.serializedCoverageFilePath
     )
 
     core.info(`Creating commit/PR threshold comment...`)

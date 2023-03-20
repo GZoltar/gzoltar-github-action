@@ -27,7 +27,8 @@ export default class FileParser {
     testCasesFilePath?: string,
     spectraFilePath?: string,
     matrixFilePath?: string,
-    statisticsFilePath?: string
+    statisticsFilePath?: string,
+    serializedCoverageFilePath?: string
   ) {
     buildPath = path.join(stateHelper.rootDirectory, buildPath)
 
@@ -70,6 +71,7 @@ export default class FileParser {
     })
     await this.parseMatrix(buildPath, matrixFilePath)
     await this.parseStatistics(buildPath, statisticsFilePath)
+    this.findSerializedCoverageFile(buildPath, serializedCoverageFilePath)
   }
 
   public get sourceCodeFiles(): ISourceCodeFile[] {
@@ -590,5 +592,39 @@ export default class FileParser {
         }`
       )
     }
+  }
+
+  private findSerializedCoverageFile(
+    buildPath: string,
+    serializedCoverageFilePath?: string
+  ): string | null {
+    core.info(`Finding Serialized Coverage File...`)
+    if (!buildPath) {
+      throw new Error("Arg 'buildPath' must not be empty")
+    }
+
+    if (serializedCoverageFilePath) {
+      if (!fs.fileExists(serializedCoverageFilePath!)) {
+        core.error(
+          `Serialized Coverage file '${serializedCoverageFilePath}' does not exist`
+        )
+        return null
+      }
+    } else {
+      core.debug(`No serializedCoverageFilePath found, starting search...`)
+      serializedCoverageFilePath = fs.searchFile(buildPath, 'gzoltar.ser')
+
+      if (!serializedCoverageFilePath) {
+        core.error(`Serialized Coverage file not found`)
+        return null
+      }
+    }
+
+    core.debug(
+      `Serialized Coverage file found: '${serializedCoverageFilePath}'`
+    )
+    this._filesPaths.push(serializedCoverageFilePath)
+
+    return serializedCoverageFilePath
   }
 }
