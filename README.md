@@ -1,6 +1,6 @@
-# GZoltar Feedback
+# 📚 GZoltar Automatic Feedback for GitHub Actions
 
-Analyzes GZoltar results and posts a comment on the pull request.
+Analyzes GZoltar results and posts a comment on the pull request/commit with the suspicious lines.
 
 ## Action inputs
 
@@ -18,3 +18,24 @@ Analyzes GZoltar results and posts a comment on the pull request.
 | `sfl-threshold`           | Line suspiciousness threshold to trigger an warning. A threshold is needed for each SFL ranking algorithms used                                                                                                                                                                                                                                                                                                 | `[0.5]`       |
 | `upload-artifacts`        | Indicates whether to upload the GZoltar results as an artifact                                                                                                                                                                                                                                                                                                                                                    | `false`       |
 
+
+## Usage
+
+Executing remote ssh commands.
+
+```yaml
+name: GZoltar Fault Localization
+on: [push]
+jobs:
+  fault-localization:
+    name: Fault Localization
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Executes GZoltar fault-localization on a Java project using CLI
+      run: ./run_gzoltar.sh
+    - name: Executes GZoltar Automatic Feedback for GitHub Actions to get summarized view
+      uses: hugofpaiva/gzoltar-feedback-action@main
+      with:
+        upload-artifacts: true
+```
