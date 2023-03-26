@@ -73,15 +73,25 @@ async function createCommitPRComment(
   inputs: {body: string; path?: string; position?: number; line?: number}
 ) {
   const octokit = getOctokit(authToken)
-  await octokit.rest.repos.createCommitComment({
-    owner: stateHelper.repoOwner,
-    repo: stateHelper.repoName,
-    commit_sha: stateHelper.currentSha,
-    body: inputs.body,
-    path: inputs.path,
-    position: inputs.position,
-    line: inputs.line
-  })
+  if (stateHelper.isInPullRequest) {
+    // Issues and PRs are the same for the GitHub API
+    await octokit.rest.issues.createComment({
+      owner: stateHelper.repoOwner,
+      repo: stateHelper.repoName,
+      issue_number: stateHelper.pullRequestNumber,
+      body: inputs.body
+    })
+  } else {
+    await octokit.rest.repos.createCommitComment({
+      owner: stateHelper.repoOwner,
+      repo: stateHelper.repoName,
+      commit_sha: stateHelper.currentSha,
+      body: inputs.body,
+      path: inputs.path,
+      position: inputs.position,
+      line: inputs.line
+    })
+  }
 }
 
 function getOctokit(authToken: string) {

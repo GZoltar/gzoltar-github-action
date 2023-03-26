@@ -21,6 +21,11 @@ function getCurrentCommitSha(): string {
 
 export const currentCommitSha = getCurrentCommitSha()
 
+export const isInPullRequest = github.context.eventName == 'pull_request'
+
+// Issues and PRs are the same for the GitHub API
+export const pullRequestNumber = github.context.issue.number
+
 export const currentSha = github.context.sha
 
 /**

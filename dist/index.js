@@ -16994,15 +16994,25 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
 exports.createCommitPRCommentLineSuspiciousnessThreshold = createCommitPRCommentLineSuspiciousnessThreshold;
 async function createCommitPRComment(authToken, inputs) {
     const octokit = getOctokit(authToken);
-    await octokit.rest.repos.createCommitComment({
-        owner: stateHelper.repoOwner,
-        repo: stateHelper.repoName,
-        commit_sha: stateHelper.currentSha,
-        body: inputs.body,
-        path: inputs.path,
-        position: inputs.position,
-        line: inputs.line
-    });
+    if (stateHelper.isInPullRequest) {
+        await octokit.rest.issues.createComment({
+            owner: stateHelper.repoOwner,
+            repo: stateHelper.repoName,
+            issue_number: stateHelper.pullRequestNumber,
+            body: inputs.body
+        });
+    }
+    else {
+        await octokit.rest.repos.createCommitComment({
+            owner: stateHelper.repoOwner,
+            repo: stateHelper.repoName,
+            commit_sha: stateHelper.currentSha,
+            body: inputs.body,
+            path: inputs.path,
+            position: inputs.position,
+            line: inputs.line
+        });
+    }
 }
 function getOctokit(authToken) {
     return github.getOctokit(authToken);
@@ -17222,7 +17232,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.repoName = exports.repoOwner = exports.rootDirectory = exports.currentSha = exports.currentCommitSha = exports.IsPost = void 0;
+exports.repoName = exports.repoOwner = exports.rootDirectory = exports.currentSha = exports.pullRequestNumber = exports.isInPullRequest = exports.currentCommitSha = exports.IsPost = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 exports.IsPost = !!core.getState('isPost');
@@ -17235,6 +17245,8 @@ function getCurrentCommitSha() {
     }
 }
 exports.currentCommitSha = getCurrentCommitSha();
+exports.isInPullRequest = github.context.eventName == 'pull_request';
+exports.pullRequestNumber = github.context.issue.number;
 exports.currentSha = github.context.sha;
 function getRootDirectory() {
     const rootDirectory = process.env.GITHUB_WORKSPACE;
