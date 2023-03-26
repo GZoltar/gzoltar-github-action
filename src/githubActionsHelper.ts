@@ -40,7 +40,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       )
     })
 
-    body += '<details>\n<summary>Line Suspiciousness by Algorithm</summary>'
+    body += '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n'
     body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder)
     body += '</details>\n'
 

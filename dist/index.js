@@ -16975,7 +16975,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 a.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)
                     .suspiciousnessValue);
         });
-        body += '<details>\n<summary>Line Suspiciousness by Algorithm</summary>';
+        body += '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';
         body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder);
         body += '</details>\n';
         body += '\n\n';
