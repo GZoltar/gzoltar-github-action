@@ -30,6 +30,9 @@ jobs:
   fault-localization:
     name: Fault Localization
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
     - uses: actions/checkout@v3
     - name: Executes GZoltar fault-localization on a Java project using CLI
@@ -37,5 +40,7 @@ jobs:
     - name: Executes GZoltar Automatic Feedback for GitHub Actions to get summarized view
       uses: hugofpaiva/gzoltar-feedback-action@main
       with:
+        sfl-ranking: "[ochiai, tarantula]"
+        sfl-threshold: "[0.5, 0.85]"
         upload-artifacts: true
 ```
