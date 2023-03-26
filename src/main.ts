@@ -30,7 +30,8 @@ async function run(): Promise<void> {
       inputs.sflRanking,
       inputs.sflThreshold,
       inputs.sflRankingOrder,
-      fileParser.sourceCodeLines
+      fileParser.sourceCodeLines,
+      fileParser.testCases
     )
 
     if (inputs.uploadArtifacts) {

@@ -16955,7 +16955,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const stateHelper = __importStar(__nccwpck_require__(9319));
-async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines) {
+async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines, testCases) {
     try {
         let body = '';
         const lines = [];
@@ -16979,12 +16979,13 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             return bSuspiciousnessValue - aSuspiciousnessValue;
         });
         if (lines.length === 0) {
-            body += "✅ **GZoltar didn't find any bug in your code** 🙌";
+            body += "✅ **GZoltar didn't find any possible bug in your code** 🙌";
         }
         else {
+            body += '⚠️ **GZoltar found possible bugs** ⚠️';
             body +=
                 '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';
-            body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder);
+            body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases);
             body += '</details>\n';
             body +=
                 '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n';
@@ -17060,7 +17061,7 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
     });
     if (linesNextToEachOther.length > 0) {
         bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`;
-        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`;
+        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
         bodyToReturn += '|---|';
         for (let i = 0; i < sflRanking.length; i++) {
             bodyToReturn += ':---:|';
@@ -17092,12 +17093,12 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
                 });
                 return suspiciousnessesString;
             });
-            bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`;
+            bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}|\n`;
         });
     }
     return bodyToReturn;
 }
-function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder) {
+function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases) {
     let bodyToReturn = '';
     sflRanking.sort((a, b) => {
         if (a === sflRankingOrder) {
@@ -17110,7 +17111,7 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder) {
     });
     if (lines.length > 0) {
         bodyToReturn += `## Line Suspiciousness by Algorithm\n`;
-        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`;
+        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
         bodyToReturn += '|---|';
         for (let i = 0; i < sflRanking.length; i++) {
             bodyToReturn += ':---:|';
@@ -17120,6 +17121,31 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder) {
             const lineLocation = line.method.file.path != undefined
                 ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
                 : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
+            const lineCoveredTests = testCases
+                .filter(testCase => testCase.coverage.some(coverage => coverage.line === line && coverage.covered))
+                .sort((a, b) => {
+                if (a.passed && !b.passed) {
+                    return 1;
+                }
+                if (!a.passed && b.passed) {
+                    return -1;
+                }
+                return 0;
+            });
+            let lineCoveredTestsString = '';
+            if (lineCoveredTests.length > 0) {
+                lineCoveredTestsString =
+                    '<br><details><summary>Tests that cover this line</summary>';
+                lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Runtime</th><th>Stacktrace</th></tr></thead><tbody>`;
+                lineCoveredTests.forEach(testCase => {
+                    lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.runtime} ns</td><td>${testCase.stacktrace
+                        ? testCase.stacktrace.length > 50
+                            ? `${testCase.stacktrace.substring(0, 50)}<details><summary>...</summary>${testCase.stacktrace.substring(50)}</details>`
+                            : testCase.stacktrace
+                        : '---'}</td></tr>`;
+                });
+                lineCoveredTestsString += '</tbody></table></details>';
+            }
             const suspiciousnesses = sflRanking.map(algorithm => {
                 let suspiciousness = line.suspiciousnessMetrics
                     .find(obj => obj.algorithm === algorithm)
@@ -17129,7 +17155,7 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder) {
                 }
                 return suspiciousness;
             });
-            bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`;
+            bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(' | ')}|\n`;
         });
     }
     return bodyToReturn;
@@ -17333,7 +17359,7 @@ async function run() {
         core.info(`Parsing files...`);
         await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath, inputs.serializedCoverageFilePath);
         core.info(`Creating commit/PR threshold comment...`);
-        await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, inputs.sflRankingOrder, fileParser.sourceCodeLines);
+        await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, inputs.sflRankingOrder, fileParser.sourceCodeLines, fileParser.testCases);
         if (inputs.uploadArtifacts) {
             core.info(`Uploading artifacts...`);
             await githubActionsHelper.uploadArtifacts('GZoltar Results', fileParser.filePaths);

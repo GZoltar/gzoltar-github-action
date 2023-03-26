@@ -4,13 +4,15 @@ import * as core from '@actions/core'
 
 import * as stateHelper from './stateHelper'
 import {ISourceCodeLine} from './types/sourceCodeLine'
+import {ITestCase} from './types/testCase'
 
 export async function createCommitPRCommentLineSuspiciousnessThreshold(
   authToken: string,
   sflRanking: string[],
   sflThreshold: number[],
   sflRankingOrder: string,
-  parsedLines: ISourceCodeLine[]
+  parsedLines: ISourceCodeLine[],
+  testCases: ITestCase[]
 ) {
   try {
     let body = ''
@@ -51,14 +53,17 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     })
 
     if (lines.length === 0) {
-      body += "✅ **GZoltar didn't find any bug in your code** 🙌"
+      body += "✅ **GZoltar didn't find any possible bug in your code** 🙌"
     } else {
+      body += '⚠️ **GZoltar found possible bugs** ⚠️'
+
       body +=
         '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n'
       body += getStringTableLineSuspiciousness(
         lines,
         sflRanking,
-        sflRankingOrder
+        sflRankingOrder,
+        testCases
       )
       body += '</details>\n'
 
@@ -170,7 +175,7 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
     bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`
 
     // Add a row for the algorithm names
-    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`
+    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`
 
     // Add a separator row for the table
     bodyToReturn += '|---|'
@@ -213,7 +218,7 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
         })
 
       // Add a row for the group of lines and their suspiciousness values
-      bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`
+      bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}|\n`
     })
   }
 
@@ -223,7 +228,8 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
 function getStringTableLineSuspiciousness(
   lines: ISourceCodeLine[],
   sflRanking: string[],
-  sflRankingOrder: string
+  sflRankingOrder: string,
+  testCases: ITestCase[]
 ): string {
   let bodyToReturn = ''
 
@@ -242,7 +248,7 @@ function getStringTableLineSuspiciousness(
     bodyToReturn += `## Line Suspiciousness by Algorithm\n`
 
     // Add a row for the algorithm names
-    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`
+    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`
 
     // Add a separator row for the table
     bodyToReturn += '|---|'
@@ -257,6 +263,49 @@ function getStringTableLineSuspiciousness(
           ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
           : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`
 
+      const lineCoveredTests = testCases
+        .filter(testCase =>
+          testCase.coverage.some(
+            coverage => coverage.line === line && coverage.covered
+          )
+        ) // Sort the tests so that the ones that passed are last
+        .sort((a, b) => {
+          if (a.passed && !b.passed) {
+            return 1
+          }
+          if (!a.passed && b.passed) {
+            return -1
+          }
+          return 0
+        })
+
+      let lineCoveredTestsString = ''
+
+      if (lineCoveredTests.length > 0) {
+        lineCoveredTestsString =
+          '<br><details><summary>Tests that cover this line</summary>'
+
+        lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Runtime</th><th>Stacktrace</th></tr></thead><tbody>`
+
+        lineCoveredTests.forEach(testCase => {
+          lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${
+            testCase.passed ? '✅' : '❌'
+          }</td><td>${testCase.runtime} ns</td><td>${
+            testCase.stacktrace
+              ? testCase.stacktrace.length > 50
+                ? `${testCase.stacktrace.substring(
+                    0,
+                    50
+                  )}<details><summary>...</summary>${testCase.stacktrace.substring(
+                    50
+                  )}</details>`
+                : testCase.stacktrace
+              : '---'
+          }</td></tr>`
+        })
+        lineCoveredTestsString += '</tbody></table></details>'
+      }
+
       const suspiciousnesses: string[] = sflRanking.map(algorithm => {
         let suspiciousness = line.suspiciousnessMetrics
           .find(obj => obj.algorithm === algorithm)
@@ -268,7 +317,9 @@ function getStringTableLineSuspiciousness(
         return suspiciousness
       })
 
-      bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`
+      bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(
+        ' | '
+      )}|\n`
     })
   }
   return bodyToReturn
