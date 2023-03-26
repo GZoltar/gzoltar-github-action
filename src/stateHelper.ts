@@ -11,7 +11,7 @@ export const IsPost = !!core.getState('isPost')
  * event is a pull request
  * @returns The current sha of the pull request or the current sha of the commit.
  */
-function getCurrentSha(): string {
+function getCurrentCommitSha(): string {
   if (github.context.eventName == 'pull_request') {
     return github.context.payload.pull_request?.head.sha
   } else {
@@ -19,7 +19,9 @@ function getCurrentSha(): string {
   }
 }
 
-export const currentSha = getCurrentSha()
+export const currentCommitSha = getCurrentCommitSha()
+
+export const currentSha = github.context.sha
 
 /**
  * It returns the root directory of the repository

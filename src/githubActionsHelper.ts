@@ -40,7 +40,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
           if (line.method.file.path != undefined) {
             body += `|https://github.com/${stateHelper.repoOwner}/${
               stateHelper.repoName
-            }/blob/${stateHelper.currentSha}${line.method.file.path}#L${
+            }/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${
               line.lineNumber
             }  | ${line.suspiciousnessMetrics
               .find(obj => obj.algorithm === algorithm)!

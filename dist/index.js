@@ -16972,7 +16972,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 body += '|---|:---:|\n';
                 lines.forEach(line => {
                     if (line.method.file.path != undefined) {
-                        body += `|https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentSha}${line.method.file.path}#L${line.lineNumber}  | ${line.suspiciousnessMetrics
+                        body += `|https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber}  | ${line.suspiciousnessMetrics
                             .find(obj => obj.algorithm === algorithm)
                             .suspiciousnessValue.toFixed(2)}|\n`;
                     }
@@ -17222,11 +17222,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.repoName = exports.repoOwner = exports.rootDirectory = exports.currentSha = exports.IsPost = void 0;
+exports.repoName = exports.repoOwner = exports.rootDirectory = exports.currentSha = exports.currentCommitSha = exports.IsPost = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 exports.IsPost = !!core.getState('isPost');
-function getCurrentSha() {
+function getCurrentCommitSha() {
     if (github.context.eventName == 'pull_request') {
         return github.context.payload.pull_request?.head.sha;
     }
@@ -17234,7 +17234,8 @@ function getCurrentSha() {
         return github.context.sha;
     }
 }
-exports.currentSha = getCurrentSha();
+exports.currentCommitSha = getCurrentCommitSha();
+exports.currentSha = github.context.sha;
 function getRootDirectory() {
     const rootDirectory = process.env.GITHUB_WORKSPACE;
     if (rootDirectory == undefined) {
