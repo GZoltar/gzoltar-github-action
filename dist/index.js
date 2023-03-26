@@ -17070,7 +17070,7 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
             const lineLocation = (lines[0].method.file.path
                 ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
                 : `${lines[0].method.file.name}$${lines[0].method.name}`) +
-                `#L${lines[0].lineNumber}${lines.length > 1 ? `-${lines[lines.length - 1].lineNumber}` : ''}`;
+                `#L${lines[0].lineNumber}${lines.length > 1 ? `-L${lines[lines.length - 1].lineNumber}` : ''}`;
             const suspiciousnesses = sflRanking
                 .map(algorithm => {
                 return lines.map(line => {

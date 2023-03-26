@@ -186,7 +186,7 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
           ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
           : `${lines[0].method.file.name}$${lines[0].method.name}`) +
         `#L${lines[0].lineNumber}${
-          lines.length > 1 ? `-${lines[lines.length - 1].lineNumber}` : ''
+          lines.length > 1 ? `-L${lines[lines.length - 1].lineNumber}` : ''
         }`
 
       // Get the suspiciousness values for each algorithm and line in the group
