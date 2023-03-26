@@ -32,17 +32,45 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     })
 
     lines.sort((a, b) => {
-      return (
-        b.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)!
-          .suspiciousnessValue -
-        a.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)!
-          .suspiciousnessValue
-      )
+      const aSuspiciousnessValue = a.suspiciousnessMetrics.find(
+        obj => obj.algorithm === sflRankingOrder
+      )?.suspiciousnessValue
+
+      const bSuspiciousnessValue = b.suspiciousnessMetrics.find(
+        obj => obj.algorithm === sflRankingOrder
+      )?.suspiciousnessValue
+
+      if (
+        aSuspiciousnessValue === undefined ||
+        bSuspiciousnessValue === undefined
+      ) {
+        return 0
+      }
+
+      return bSuspiciousnessValue - aSuspiciousnessValue
     })
 
-    body += '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n'
-    body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder)
-    body += '</details>\n'
+    if (lines.length === 0) {
+      body += "✅ **GZoltar didn't find any bug in your code** 🙌"
+    } else {
+      body +=
+        '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n'
+      body += getStringTableLineSuspiciousness(
+        lines,
+        sflRanking,
+        sflRankingOrder
+      )
+      body += '</details>\n'
+
+      body +=
+        '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n'
+      body += getStringTableLineSuspiciousnessWithCodeBlock(
+        lines,
+        sflRanking,
+        sflRankingOrder
+      )
+      body += '</details>\n'
+    }
 
     body += '\n\n'
 
@@ -54,6 +82,142 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       }`
     )
   }
+}
+
+function getStringTableLineSuspiciousnessWithCodeBlock(
+  lines: ISourceCodeLine[],
+  sflRanking: string[],
+  sflRankingOrder: string
+): string {
+  let bodyToReturn = ''
+
+  sflRanking.sort((a, b) => {
+    if (a === sflRankingOrder) {
+      return -1
+    }
+    if (b === sflRankingOrder) {
+      return 1
+    }
+    return 0
+  })
+
+  const linesByMethod: ISourceCodeLine[][] = []
+  const linesNextToEachOther: ISourceCodeLine[][] = []
+  const lineSeparationThreshold = 5
+
+  // group lines by method
+  const uniqueMethods = [...new Set(lines.map(line => line.method))]
+  uniqueMethods.forEach(method => {
+    linesByMethod.push(lines.filter(line => line.method === method))
+  })
+
+  // group lines that are next to each other
+  linesByMethod.forEach(linesOfMethod => {
+    linesOfMethod.sort((a, b) => a.lineNumber - b.lineNumber)
+    let currentLinesNextToEachOther: ISourceCodeLine[] = []
+    linesOfMethod.forEach(line => {
+      if (
+        currentLinesNextToEachOther.length === 0 ||
+        line.lineNumber -
+          currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
+            .lineNumber <=
+          lineSeparationThreshold
+      ) {
+        currentLinesNextToEachOther.push(line)
+      } else {
+        linesNextToEachOther.push(currentLinesNextToEachOther)
+        currentLinesNextToEachOther = [line]
+      }
+    })
+    if (currentLinesNextToEachOther.length > 0) {
+      linesNextToEachOther.push(currentLinesNextToEachOther)
+    }
+  })
+
+  // sort grouped lines by max suspiciousness based on sflRankingOrder
+  linesNextToEachOther.sort((a, b) => {
+    const maxA = a
+      .map(line => {
+        const suspiciousnessValue = line.suspiciousnessMetrics.find(
+          obj => obj.algorithm === sflRankingOrder
+        )?.suspiciousnessValue
+
+        if (suspiciousnessValue === undefined) {
+          return 0
+        }
+
+        return suspiciousnessValue
+      })
+      .reduce((a, b) => Math.max(a, b))
+    const maxB = b
+      .map(line => {
+        const suspiciousnessValue = line.suspiciousnessMetrics.find(
+          obj => obj.algorithm === sflRankingOrder
+        )?.suspiciousnessValue
+
+        if (suspiciousnessValue === undefined) {
+          return 0
+        }
+
+        return suspiciousnessValue
+      })
+      .reduce((a, b) => Math.max(a, b))
+    return maxB - maxA
+  })
+
+  if (linesNextToEachOther.length > 0) {
+    // Add a header for the table
+    bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`
+
+    // Add a row for the algorithm names
+    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`
+
+    // Add a separator row for the table
+    bodyToReturn += '|---|'
+    for (let i = 0; i < sflRanking.length; i++) {
+      bodyToReturn += ':---:|'
+    }
+    bodyToReturn += '\n'
+
+    // Iterate over each group of lines
+    linesNextToEachOther.forEach(lines => {
+      const lineLocation =
+        (lines[0].method.file.path
+          ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
+          : `${lines[0].method.file.name}$${lines[0].method.name}`) +
+        `#L${lines[0].lineNumber}${
+          lines.length > 1 ? `-${lines[lines.length - 1].lineNumber}` : ''
+        }`
+
+      // Get the suspiciousness values for each algorithm and line in the group
+      const suspiciousnesses: string[] = sflRanking
+        .map(algorithm => {
+          return lines.map(line => {
+            return line.suspiciousnessMetrics
+              .find(obj => obj.algorithm === algorithm)
+              ?.suspiciousnessValue.toFixed(2)
+          })
+        }) // Convert the suspiciousness values to a string
+        .map(suspiciousnesses => {
+          let suspiciousnessesString = ''
+          suspiciousnesses.forEach((suspiciousness, index) => {
+            if (index != 0) {
+              suspiciousnessesString += '<br>'
+            }
+            if (suspiciousness === undefined) {
+              suspiciousnessesString += '---'
+            }
+            suspiciousnessesString += suspiciousness
+          })
+          return suspiciousnessesString
+        })
+
+      // Add a row for the group of lines and their suspiciousness values
+      bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`
+    })
+  }
+
+  return bodyToReturn
 }
 
 function getStringTableLineSuspiciousness(
@@ -74,13 +238,19 @@ function getStringTableLineSuspiciousness(
   })
 
   if (lines.length > 0) {
+    // Add a header for the table
     bodyToReturn += `## Line Suspiciousness by Algorithm\n`
-    bodyToReturn += `|Line | ${sflRanking.join(' | ')}\n`
+
+    // Add a row for the algorithm names
+    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`
+
+    // Add a separator row for the table
     bodyToReturn += '|---|'
     for (let i = 0; i < sflRanking.length; i++) {
       bodyToReturn += ':---:|'
     }
     bodyToReturn += '\n'
+
     lines.forEach(line => {
       const lineLocation =
         line.method.file.path != undefined
@@ -88,9 +258,14 @@ function getStringTableLineSuspiciousness(
           : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`
 
       const suspiciousnesses: string[] = sflRanking.map(algorithm => {
-        return line.suspiciousnessMetrics
-          .find(obj => obj.algorithm === algorithm)!
-          .suspiciousnessValue.toFixed(2)
+        let suspiciousness = line.suspiciousnessMetrics
+          .find(obj => obj.algorithm === algorithm)
+          ?.suspiciousnessValue.toFixed(2)
+
+        if (suspiciousness == undefined) {
+          suspiciousness = '---'
+        }
+        return suspiciousness
       })
 
       bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`

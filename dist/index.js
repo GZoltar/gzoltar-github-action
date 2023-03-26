@@ -16970,14 +16970,27 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             });
         });
         lines.sort((a, b) => {
-            return (b.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)
-                .suspiciousnessValue -
-                a.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)
-                    .suspiciousnessValue);
+            const aSuspiciousnessValue = a.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
+            const bSuspiciousnessValue = b.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
+            if (aSuspiciousnessValue === undefined ||
+                bSuspiciousnessValue === undefined) {
+                return 0;
+            }
+            return bSuspiciousnessValue - aSuspiciousnessValue;
         });
-        body += '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';
-        body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder);
-        body += '</details>\n';
+        if (lines.length === 0) {
+            body += "✅ **GZoltar didn't find any bug in your code** 🙌";
+        }
+        else {
+            body +=
+                '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';
+            body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder);
+            body += '</details>\n';
+            body +=
+                '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n';
+            body += getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder);
+            body += '</details>\n';
+        }
         body += '\n\n';
         await createCommitPRComment(authToken, { body });
     }
@@ -16986,6 +16999,104 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
     }
 }
 exports.createCommitPRCommentLineSuspiciousnessThreshold = createCommitPRCommentLineSuspiciousnessThreshold;
+function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder) {
+    let bodyToReturn = '';
+    sflRanking.sort((a, b) => {
+        if (a === sflRankingOrder) {
+            return -1;
+        }
+        if (b === sflRankingOrder) {
+            return 1;
+        }
+        return 0;
+    });
+    const linesByMethod = [];
+    const linesNextToEachOther = [];
+    const lineSeparationThreshold = 5;
+    const uniqueMethods = [...new Set(lines.map(line => line.method))];
+    uniqueMethods.forEach(method => {
+        linesByMethod.push(lines.filter(line => line.method === method));
+    });
+    linesByMethod.forEach(linesOfMethod => {
+        linesOfMethod.sort((a, b) => a.lineNumber - b.lineNumber);
+        let currentLinesNextToEachOther = [];
+        linesOfMethod.forEach(line => {
+            if (currentLinesNextToEachOther.length === 0 ||
+                line.lineNumber -
+                    currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
+                        .lineNumber <=
+                    lineSeparationThreshold) {
+                currentLinesNextToEachOther.push(line);
+            }
+            else {
+                linesNextToEachOther.push(currentLinesNextToEachOther);
+                currentLinesNextToEachOther = [line];
+            }
+        });
+        if (currentLinesNextToEachOther.length > 0) {
+            linesNextToEachOther.push(currentLinesNextToEachOther);
+        }
+    });
+    linesNextToEachOther.sort((a, b) => {
+        const maxA = a
+            .map(line => {
+            const suspiciousnessValue = line.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
+            if (suspiciousnessValue === undefined) {
+                return 0;
+            }
+            return suspiciousnessValue;
+        })
+            .reduce((a, b) => Math.max(a, b));
+        const maxB = b
+            .map(line => {
+            const suspiciousnessValue = line.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
+            if (suspiciousnessValue === undefined) {
+                return 0;
+            }
+            return suspiciousnessValue;
+        })
+            .reduce((a, b) => Math.max(a, b));
+        return maxB - maxA;
+    });
+    if (linesNextToEachOther.length > 0) {
+        bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`;
+        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`;
+        bodyToReturn += '|---|';
+        for (let i = 0; i < sflRanking.length; i++) {
+            bodyToReturn += ':---:|';
+        }
+        bodyToReturn += '\n';
+        linesNextToEachOther.forEach(lines => {
+            const lineLocation = (lines[0].method.file.path
+                ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
+                : `${lines[0].method.file.name}$${lines[0].method.name}`) +
+                `#L${lines[0].lineNumber}${lines.length > 1 ? `-${lines[lines.length - 1].lineNumber}` : ''}`;
+            const suspiciousnesses = sflRanking
+                .map(algorithm => {
+                return lines.map(line => {
+                    return line.suspiciousnessMetrics
+                        .find(obj => obj.algorithm === algorithm)
+                        ?.suspiciousnessValue.toFixed(2);
+                });
+            })
+                .map(suspiciousnesses => {
+                let suspiciousnessesString = '';
+                suspiciousnesses.forEach((suspiciousness, index) => {
+                    if (index != 0) {
+                        suspiciousnessesString += '<br>';
+                    }
+                    if (suspiciousness === undefined) {
+                        suspiciousnessesString += '---';
+                    }
+                    suspiciousnessesString += suspiciousness;
+                });
+                return suspiciousnessesString;
+            });
+            bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`;
+        });
+    }
+    return bodyToReturn;
+}
 function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder) {
     let bodyToReturn = '';
     sflRanking.sort((a, b) => {
@@ -16999,7 +17110,7 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder) {
     });
     if (lines.length > 0) {
         bodyToReturn += `## Line Suspiciousness by Algorithm\n`;
-        bodyToReturn += `|Line | ${sflRanking.join(' | ')}\n`;
+        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}\n`;
         bodyToReturn += '|---|';
         for (let i = 0; i < sflRanking.length; i++) {
             bodyToReturn += ':---:|';
@@ -17010,9 +17121,13 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder) {
                 ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
                 : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
             const suspiciousnesses = sflRanking.map(algorithm => {
-                return line.suspiciousnessMetrics
+                let suspiciousness = line.suspiciousnessMetrics
                     .find(obj => obj.algorithm === algorithm)
-                    .suspiciousnessValue.toFixed(2);
+                    ?.suspiciousnessValue.toFixed(2);
+                if (suspiciousness == undefined) {
+                    suspiciousness = '---';
+                }
+                return suspiciousness;
             });
             bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}\n`;
         });
