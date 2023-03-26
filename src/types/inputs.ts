@@ -45,6 +45,11 @@ export interface IInputs {
   sflThreshold: number[]
 
   /**
+   * Ranking algorithm to order table results by suspiciousness, on descending order.
+   */
+  sflRankingOrder: string
+
+  /**
    * Indicates whether to upload the GZoltar results as an artifact
    */
   uploadArtifacts: boolean

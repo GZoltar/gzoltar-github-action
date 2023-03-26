@@ -33,8 +33,11 @@ inputs:
     description: 'List of the SFL ranking algorithms to use separated by `,`. (Keep in mind that each algorithm need to have present a fault localization report file in the `ranking-files-path` directory with his name, i.e. `ochiai.ranking.csv`.)'
     default: '[ochiai]'
   sfl-threshold:
-    description: 'Line suspiciousness threshold to trigger an warning. A threshold is needed for each SFL ranking algorithms used'
+    description: 'Line suspiciousness threshold to trigger an warning and show on results. A threshold is needed for each SFL ranking algorithms used'
     default: '[0.5]'
+  sfl-ranking-order:
+    description: 'Ranking algorithm to order table results by suspiciousness, on descending order.'
+    default: 'ochiai'
   upload-artifacts:
     description: 'Indicates whether to upload the GZoltar results as an artifact'
     default: false

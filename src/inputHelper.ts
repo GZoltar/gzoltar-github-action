@@ -83,6 +83,15 @@ export async function getInputs(): Promise<IInputs> {
     )
   }
 
+  // SFL Ranking Order
+  const sflRankingOrder: string = core.getInput('sfl-ranking-order')
+
+  if (sflRanking.indexOf(sflRankingOrder)) {
+    throw new Error(
+      'The value of `sfl-ranking-order` should be one of the elements in `sfl-ranking`.'
+    )
+  }
+
   // Upload Artifacts
   const uploadArtifacts: boolean = core.getInput('upload-artifacts') === 'true'
 
@@ -101,6 +110,7 @@ export async function getInputs(): Promise<IInputs> {
     rankingFilesPaths: rankingFilesPaths,
     sflRanking: sflRanking,
     sflThreshold: sflThreshold,
+    sflRankingOrder: sflRankingOrder,
     uploadArtifacts: uploadArtifacts
   }
 }

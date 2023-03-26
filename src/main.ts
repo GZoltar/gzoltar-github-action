@@ -29,6 +29,7 @@ async function run(): Promise<void> {
       inputs.authToken,
       inputs.sflRanking,
       inputs.sflThreshold,
+      inputs.sflRankingOrder,
       fileParser.sourceCodeLines
     )
 
