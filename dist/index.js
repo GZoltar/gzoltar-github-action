@@ -17359,6 +17359,7 @@ async function getDiff(authToken) {
             filesOnDiff.push({ path: file.filename, changedLines: changedLines });
         });
         console.log(filesOnDiff);
+        console.log(filesOnDiff[0].changedLines);
     }
     catch (error) {
         throw new Error(`Encountered an error when getting diff: ${error?.message ?? error}`);

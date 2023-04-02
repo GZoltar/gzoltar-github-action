@@ -199,6 +199,8 @@ export async function getDiff(authToken: string) {
     })
 
     console.log(filesOnDiff)
+    console.log(filesOnDiff[0].changedLines)
+
   } catch (error) {
     throw new Error(
       `Encountered an error when getting diff: ${
