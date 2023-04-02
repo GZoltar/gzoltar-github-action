@@ -16497,9 +16497,9 @@ function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCas
         return getColoredSuspiciousness(suspiciousness);
     });
     if (standAloneTableWithoutLineLocation) {
-        bodyToReturn += `|⬇ ${sflRanking.join(' | ')}`;
+        bodyToReturn += `|⬇ ${sflRanking.join(' | ')}|\n`;
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += ':---:|';
+            bodyToReturn += '|:---:|';
         }
         bodyToReturn += '\n';
     }
@@ -17300,7 +17300,9 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 if (fileOnDiff.changedLines.some(changed => changed.startLine <= line.lineNumber &&
                     changed.endLine >= line.lineNumber)) {
                     createCommitPRComment(authToken, {
-                        body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, true),
+                        body: '<details><summary>Line Suspiciousness by Algorithm</summary>\n\n## Line Suspiciousness by Algorithm\n' +
+                            dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, true) +
+                            '</details>',
                         path: fileOnDiff.path,
                         position: calculatePosition(fileOnDiff.changedLines, line.lineNumber)
                     }, true);

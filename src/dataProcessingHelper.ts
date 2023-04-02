@@ -230,9 +230,9 @@ export function getStringTableLineSuspiciousnessForSingleLine(
   })
 
   if (standAloneTableWithoutLineLocation) {
-    bodyToReturn += `|⬇ ${sflRanking.join(' | ')}`
+    bodyToReturn += `|⬇ ${sflRanking.join(' | ')}|\n`
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += ':---:|'
+      bodyToReturn += '|:---:|'
     }
     bodyToReturn += '\n'
   }
