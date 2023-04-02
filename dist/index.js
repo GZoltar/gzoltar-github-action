@@ -17083,7 +17083,7 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
                         line.lineNumber > lines[index - 1].lineNumber + 1) {
                         let previousLineNumber = lines[index - 1].lineNumber;
                         while (previousLineNumber < line.lineNumber - 1) {
-                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** ----<br>`;
+                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
                             previousLineNumber++;
                         }
                     }
@@ -17091,7 +17091,7 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
                         returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
                     }
                     else {
-                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ----`;
+                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
                     }
                     return returnSuspiciousnessForThisLineAndAlgorithm;
                 });
@@ -17239,27 +17239,28 @@ function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
     return stacktrace;
 }
 function getColoredSuspiciousness(suspiciousness) {
-    return suspiciousness;
-    let color = 'white';
+    let color = undefined;
     if (suspiciousness !== '' && suspiciousness !== '---') {
         const suspiciousnessValue = parseFloat(suspiciousness);
-        if (suspiciousnessValue > 0.9) {
-            color = 'red';
+        if (suspiciousnessValue >= 0.9) {
+            color = 'aa0000';
         }
-        else if (suspiciousnessValue > 0.75) {
-            color = 'orange';
+        else if (suspiciousnessValue >= 0.75) {
+            color = 'ff5f00';
         }
-        else if (suspiciousnessValue > 0.5) {
-            color = 'yellow';
+        else if (suspiciousnessValue >= 0.5) {
+            color = 'ffaf00';
         }
-        else if (suspiciousnessValue > 0.25) {
-            color = 'lightgreen';
+        else if (suspiciousnessValue >= 0.25) {
+            color = 'afff87';
         }
         else {
-            color = 'green';
+            color = '00aa00';
         }
     }
-    return '$${\\color{' + color + '}' + suspiciousness + '}$$';
+    return ((color != undefined
+        ? `![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
+        : '') + suspiciousness);
 }
 function getOctokit(authToken) {
     return github.getOctokit(authToken);
