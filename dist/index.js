@@ -17281,6 +17281,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         await createCommitPRComment(authToken, { body });
         const filesOnDiff = await getFilesOnDiff(authToken);
         lines.forEach(line => {
+            console.log(line.method.file.path);
             const fileOnDiff = filesOnDiff.find(file => file.path === line.method.file.path);
             if (fileOnDiff) {
                 if (fileOnDiff.changedLines.some(changed => changed.startLine <= line.lineNumber &&

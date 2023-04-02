@@ -90,6 +90,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     const filesOnDiff: IFileOnDiff[] = await getFilesOnDiff(authToken)
 
     lines.forEach(line => {
+      console.log(line.method.file.path)
       const fileOnDiff = filesOnDiff.find(
         file => file.path === line.method.file.path
       )
