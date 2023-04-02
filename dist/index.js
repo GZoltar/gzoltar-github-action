@@ -17287,6 +17287,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                     changed.endLine >= line.lineNumber)) {
                     createCommitPRComment(authToken, {
                         body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases),
+                        path: fileOnDiff.path,
                         position: calculatePosition(fileOnDiff.changedLines, line.lineNumber)
                     }, true);
                 }

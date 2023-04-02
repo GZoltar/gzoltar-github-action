@@ -110,6 +110,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
                 sflRanking,
                 testCases
               ),
+              path: fileOnDiff.path,
               position: calculatePosition(
                 fileOnDiff.changedLines,
                 line.lineNumber
