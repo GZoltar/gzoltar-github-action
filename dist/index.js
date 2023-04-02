@@ -17303,7 +17303,7 @@ function calculatePosition(changedLine, lineNumber) {
     let position = 0;
     changedLine.forEach(changed => {
         if (changed.startLine <= lineNumber && changed.endLine >= lineNumber) {
-            position += lineNumber - changed.startLine;
+            position += lineNumber - changed.startLine + 1;
         }
     });
     return position;
