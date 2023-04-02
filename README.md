@@ -43,5 +43,6 @@ jobs:
       with:
         sfl-ranking: "[ochiai, tarantula]"
         sfl-threshold: "[0.5, 0.85]"
+        sfl-ranking-order: "ochiai"
         upload-artifacts: true
 ```
