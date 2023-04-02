@@ -17281,15 +17281,14 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         await createCommitPRComment(authToken, { body });
         const filesOnDiff = await getFilesOnDiff(authToken);
         lines.forEach(line => {
-            console.log(line.method.file.path);
-            const fileOnDiff = filesOnDiff.find(file => file.path === line.method.file.path);
+            const fileOnDiff = filesOnDiff.find(file => '/' + file.path === line.method.file.path);
             if (fileOnDiff) {
                 if (fileOnDiff.changedLines.some(changed => changed.startLine <= line.lineNumber &&
                     changed.endLine >= line.lineNumber)) {
                     createCommitPRComment(authToken, {
                         body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases),
                         line: line.lineNumber
-                    });
+                    }, true);
                 }
             }
         });
@@ -17299,10 +17298,11 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
     }
 }
 exports.createCommitPRCommentLineSuspiciousnessThreshold = createCommitPRCommentLineSuspiciousnessThreshold;
-async function createCommitPRComment(authToken, inputs) {
+async function createCommitPRComment(authToken, inputs, forceCommentOnCommit) {
     try {
         const octokit = getOctokit(authToken);
-        if (stateHelper.isInPullRequest) {
+        forceCommentOnCommit = forceCommentOnCommit || false;
+        if (stateHelper.isInPullRequest && !forceCommentOnCommit) {
             await octokit.rest.issues.createComment({
                 owner: stateHelper.repoOwner,
                 repo: stateHelper.repoName,
@@ -17314,7 +17314,7 @@ async function createCommitPRComment(authToken, inputs) {
             await octokit.rest.repos.createCommitComment({
                 owner: stateHelper.repoOwner,
                 repo: stateHelper.repoName,
-                commit_sha: stateHelper.currentSha,
+                commit_sha: stateHelper.currentCommitSha,
                 body: inputs.body,
                 path: inputs.path,
                 position: inputs.position,

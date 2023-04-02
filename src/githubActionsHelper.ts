@@ -90,9 +90,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     const filesOnDiff: IFileOnDiff[] = await getFilesOnDiff(authToken)
 
     lines.forEach(line => {
-      console.log(line.method.file.path)
       const fileOnDiff = filesOnDiff.find(
-        file => file.path === line.method.file.path
+        file => '/' + file.path === line.method.file.path
       )
 
       if (fileOnDiff) {
@@ -103,14 +102,18 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
               changed.endLine >= line.lineNumber
           )
         ) {
-          createCommitPRComment(authToken, {
-            body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(
-              line,
-              sflRanking,
-              testCases
-            ),
-            line: line.lineNumber
-          })
+          createCommitPRComment(
+            authToken,
+            {
+              body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(
+                line,
+                sflRanking,
+                testCases
+              ),
+              line: line.lineNumber
+            },
+            true
+          )
         }
       }
     })
@@ -125,11 +128,13 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
 
 async function createCommitPRComment(
   authToken: string,
-  inputs: {body: string; path?: string; position?: number; line?: number}
+  inputs: {body: string; path?: string; position?: number; line?: number},
+  forceCommentOnCommit?: boolean
 ) {
   try {
     const octokit = getOctokit(authToken)
-    if (stateHelper.isInPullRequest) {
+    forceCommentOnCommit = forceCommentOnCommit || false
+    if (stateHelper.isInPullRequest && !forceCommentOnCommit) {
       // Issues and PRs are the same for the GitHub API
       await octokit.rest.issues.createComment({
         owner: stateHelper.repoOwner,
@@ -141,7 +146,7 @@ async function createCommitPRComment(
       await octokit.rest.repos.createCommitComment({
         owner: stateHelper.repoOwner,
         repo: stateHelper.repoName,
-        commit_sha: stateHelper.currentSha,
+        commit_sha: stateHelper.currentCommitSha,
         body: inputs.body,
         path: inputs.path,
         position: inputs.position,
