@@ -110,7 +110,10 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
                 sflRanking,
                 testCases
               ),
-              line: line.lineNumber
+              position: calculatePosition(
+                fileOnDiff.changedLines,
+                line.lineNumber
+              )
             },
             true
           )
@@ -124,6 +127,23 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       }`
     )
   }
+}
+
+function calculatePosition(
+  changedLine: {
+    startLine: number
+    endLine: number
+  }[],
+  lineNumber: number
+): number {
+  let position = 0
+  changedLine.forEach(changed => {
+    if (changed.startLine <= lineNumber && changed.endLine >= lineNumber) {
+      position += lineNumber - changed.startLine
+    }
+  })
+
+  return position
 }
 
 async function createCommitPRComment(

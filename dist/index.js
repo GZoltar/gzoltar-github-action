@@ -17287,7 +17287,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                     changed.endLine >= line.lineNumber)) {
                     createCommitPRComment(authToken, {
                         body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases),
-                        line: line.lineNumber
+                        position: calculatePosition(fileOnDiff.changedLines, line.lineNumber)
                     }, true);
                 }
             }
@@ -17298,6 +17298,15 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
     }
 }
 exports.createCommitPRCommentLineSuspiciousnessThreshold = createCommitPRCommentLineSuspiciousnessThreshold;
+function calculatePosition(changedLine, lineNumber) {
+    let position = 0;
+    changedLine.forEach(changed => {
+        if (changed.startLine <= lineNumber && changed.endLine >= lineNumber) {
+            position += lineNumber - changed.startLine;
+        }
+    });
+    return position;
+}
 async function createCommitPRComment(authToken, inputs, forceCommentOnCommit) {
     try {
         const octokit = getOctokit(authToken);
