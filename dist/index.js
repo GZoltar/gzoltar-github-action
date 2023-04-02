@@ -17195,21 +17195,25 @@ function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
     if (stacktrace.length > maxLength) {
         const indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ');
         if (indexOfSpace > 0) {
-            stacktraceToReturn += stacktrace.substring(0, indexOfSpace);
+            stacktraceToReturn +=
+                '```' + stacktrace.substring(0, indexOfSpace) + '```';
             stacktraceAfterSubstring = stacktrace.substring(indexOfSpace);
             stacktraceToReturn += '<details><summary>...</summary>';
         }
         while (stacktraceAfterSubstring.length > maxLength) {
             const indexOfSpace = stacktraceAfterSubstring
-                .substring(0, maxLength)
+                .substring(0, maxLength * 2)
                 .lastIndexOf(' ');
             if (indexOfSpace > 0) {
-                stacktraceToReturn += stacktraceAfterSubstring.substring(0, indexOfSpace);
+                stacktraceToReturn +=
+                    '<br> ```' +
+                        stacktraceAfterSubstring.substring(0, indexOfSpace) +
+                        '```';
                 stacktraceAfterSubstring =
                     stacktraceAfterSubstring.substring(indexOfSpace);
             }
         }
-        stacktraceToReturn += stacktraceAfterSubstring;
+        stacktraceToReturn += '<br> ```' + stacktraceAfterSubstring + '```';
         stacktraceToReturn += '</details>';
     }
     return stacktrace;
