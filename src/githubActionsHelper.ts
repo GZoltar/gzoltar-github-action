@@ -197,16 +197,31 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
       // Get the suspiciousness values for each algorithm and line in the group
       const suspiciousnesses: string[] = sflRanking
         .map(algorithm => {
-          return lines.map(line => {
+          return lines.map((line, index) => {
             let suspiciousnessForThisLineAndAlgorithm =
               line.suspiciousnessMetrics
                 .find(obj => obj.algorithm === algorithm)
                 ?.suspiciousnessValue.toFixed(2)
-            if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-              return `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`
-            } else {
-              ;`**L${line.lineNumber} 𑗅** ---`
+            let returnSuspiciousnessForThisLineAndAlgorithm = ''
+            if (
+              index != 0 &&
+              line.lineNumber > lines[index - 1].lineNumber + 1
+            ) {
+              let previousLineNumber = lines[index - 1].lineNumber
+              while (previousLineNumber < line.lineNumber - 1) {
+                returnSuspiciousnessForThisLineAndAlgorithm += `**L${
+                  previousLineNumber + 1
+                } 𑗅** ---<br>`
+                previousLineNumber++
+              }
             }
+
+            if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
+              returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`
+            } else {
+              returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---`
+            }
+            return returnSuspiciousnessForThisLineAndAlgorithm
           })
         }) // Convert the suspiciousness values to a string
         .map(suspiciousnesses => {

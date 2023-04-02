@@ -17074,17 +17074,26 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
                 `#L${lines[0].lineNumber}${lines.length > 1 ? `-L${lines[lines.length - 1].lineNumber}` : ''}`;
             const suspiciousnesses = sflRanking
                 .map(algorithm => {
-                return lines.map(line => {
+                return lines.map((line, index) => {
                     let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
                         .find(obj => obj.algorithm === algorithm)
                         ?.suspiciousnessValue.toFixed(2);
+                    let returnSuspiciousnessForThisLineAndAlgorithm = '';
+                    if (index != 0 &&
+                        line.lineNumber > lines[index - 1].lineNumber + 1) {
+                        let previousLineNumber = lines[index - 1].lineNumber;
+                        while (previousLineNumber < line.lineNumber - 1) {
+                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** ---<br>`;
+                            previousLineNumber++;
+                        }
+                    }
                     if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-                        return `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`;
+                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`;
                     }
                     else {
-                        ;
-                        `**L${line.lineNumber} 𑗅** ---`;
+                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---`;
                     }
+                    return returnSuspiciousnessForThisLineAndAlgorithm;
                 });
             })
                 .map(suspiciousnesses => {
