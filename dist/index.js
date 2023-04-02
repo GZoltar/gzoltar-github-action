@@ -17157,7 +17157,7 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
                 lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
                 lineCoveredTests.forEach(testCase => {
                     lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
-                        ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 50)
+                        ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
                         : '---'}</td></tr>`;
                 });
                 lineCoveredTestsString += '</tbody></table></details>';
@@ -17202,41 +17202,44 @@ function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
     let stacktraceToReturn = '';
     let stacktraceAfterSubstring = '';
     if (stacktrace.length > maxLength) {
-        const indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ');
-        if (indexOfSpace > 0) {
-            stacktraceToReturn +=
-                '```' + stacktrace.substring(0, indexOfSpace) + '```';
-            stacktraceAfterSubstring = stacktrace.substring(indexOfSpace);
+        let indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ');
+        if (indexOfSpace < 25) {
+            const newIndexOfSpace = stacktrace.substring(maxLength).indexOf(' ');
+            indexOfSpace =
+                newIndexOfSpace > 0 ? newIndexOfSpace + maxLength : indexOfSpace;
         }
-        else {
-            stacktraceToReturn += '```' + stacktrace.substring(0, maxLength) + '```';
-            stacktraceAfterSubstring = stacktrace.substring(maxLength);
-        }
+        stacktraceToReturn += '```' + stacktrace.substring(0, indexOfSpace) + '```';
+        stacktraceAfterSubstring = stacktrace.substring(indexOfSpace + 1);
         stacktraceToReturn += '<details><summary>...</summary>';
         while (stacktraceAfterSubstring.length > maxLength) {
-            const indexOfSpace = stacktraceAfterSubstring
+            let innerIndexOfSpace = stacktraceAfterSubstring
                 .substring(0, maxLength)
                 .lastIndexOf(' ');
-            if (indexOfSpace > 0) {
-                stacktraceToReturn +=
-                    '<br> ```' +
-                        stacktraceAfterSubstring.substring(0, indexOfSpace) +
-                        '```';
-                stacktraceAfterSubstring =
-                    stacktraceAfterSubstring.substring(indexOfSpace);
+            if (innerIndexOfSpace < 25) {
+                const newInnerIndexOfSpace = stacktraceAfterSubstring
+                    .substring(maxLength)
+                    .indexOf(' ');
+                innerIndexOfSpace =
+                    newInnerIndexOfSpace > 0
+                        ? newInnerIndexOfSpace + maxLength
+                        : innerIndexOfSpace;
             }
-            else {
-                stacktraceToReturn +=
-                    '<br> ```' + stacktraceAfterSubstring.substring(0, maxLength) + '```';
-                stacktraceAfterSubstring = stacktraceAfterSubstring.substring(maxLength);
-            }
+            stacktraceToReturn +=
+                '```' +
+                    stacktraceAfterSubstring.substring(0, innerIndexOfSpace) +
+                    '```<br>';
+            stacktraceAfterSubstring = stacktraceAfterSubstring.substring(innerIndexOfSpace + 1);
         }
-        stacktraceToReturn += '<br> ```' + stacktraceAfterSubstring + '```';
+        if (stacktraceAfterSubstring.length > 0) {
+            stacktraceToReturn += '```' + stacktraceAfterSubstring + '```';
+        }
         stacktraceToReturn += '</details>';
+        return stacktraceToReturn;
     }
     return stacktrace;
 }
 function getColoredSuspiciousness(suspiciousness) {
+    return suspiciousness;
     let color = 'white';
     if (suspiciousness !== '' && suspiciousness !== '---') {
         const suspiciousnessValue = parseFloat(suspiciousness);
