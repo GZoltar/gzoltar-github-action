@@ -17075,9 +17075,16 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
             const suspiciousnesses = sflRanking
                 .map(algorithm => {
                 return lines.map(line => {
-                    return line.suspiciousnessMetrics
+                    let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
                         .find(obj => obj.algorithm === algorithm)
                         ?.suspiciousnessValue.toFixed(2);
+                    if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
+                        return `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`;
+                    }
+                    else {
+                        ;
+                        `**L${line.lineNumber} 𑗅** ---`;
+                    }
                 });
             })
                 .map(suspiciousnesses => {
@@ -17089,7 +17096,9 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
                     if (suspiciousness === undefined) {
                         suspiciousnessesString += '---';
                     }
-                    suspiciousnessesString += suspiciousness;
+                    else {
+                        suspiciousnessesString += suspiciousness;
+                    }
                 });
                 return suspiciousnessesString;
             });

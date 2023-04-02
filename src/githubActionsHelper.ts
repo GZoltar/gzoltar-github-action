@@ -198,9 +198,15 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
       const suspiciousnesses: string[] = sflRanking
         .map(algorithm => {
           return lines.map(line => {
-            return line.suspiciousnessMetrics
-              .find(obj => obj.algorithm === algorithm)
-              ?.suspiciousnessValue.toFixed(2)
+            let suspiciousnessForThisLineAndAlgorithm =
+              line.suspiciousnessMetrics
+                .find(obj => obj.algorithm === algorithm)
+                ?.suspiciousnessValue.toFixed(2)
+            if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
+              return `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`
+            } else {
+              ;`**L${line.lineNumber} 𑗅** ---`
+            }
           })
         }) // Convert the suspiciousness values to a string
         .map(suspiciousnesses => {
@@ -211,8 +217,9 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
             }
             if (suspiciousness === undefined) {
               suspiciousnessesString += '---'
+            } else {
+              suspiciousnessesString += suspiciousness
             }
-            suspiciousnessesString += suspiciousness
           })
           return suspiciousnessesString
         })
