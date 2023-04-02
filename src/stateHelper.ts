@@ -12,7 +12,7 @@ export const IsPost = !!core.getState('isPost')
  * @returns The current sha of the pull request or the current sha of the commit.
  */
 function getCurrentCommitSha(): string {
-  if (isInPullRequest) {
+  if (github.context.eventName == 'pull_request') {
     return github.context.payload.pull_request?.head.sha
   } else {
     return github.context.sha
@@ -26,9 +26,9 @@ function getCurrentCommitSha(): string {
  * @throws Error if the event is not a pull request and the previous sha is not defined.
  */
 function getBaseCommitSha(): string | undefined {
-  if (isInPullRequest) {
+  if (github.context.eventName == 'pull_request') {
     return github.context.payload.pull_request?.base.sha
-  } else if (isInPush) {
+  } else if (github.context.eventName == 'push') {
     return github.context.payload.before
   } else {
     throw new Error(

@@ -17557,7 +17557,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 exports.IsPost = !!core.getState('isPost');
 function getCurrentCommitSha() {
-    if (exports.isInPullRequest) {
+    if (github.context.eventName == 'pull_request') {
         return github.context.payload.pull_request?.head.sha;
     }
     else {
@@ -17565,10 +17565,10 @@ function getCurrentCommitSha() {
     }
 }
 function getBaseCommitSha() {
-    if (exports.isInPullRequest) {
+    if (github.context.eventName == 'pull_request') {
         return github.context.payload.pull_request?.base.sha;
     }
-    else if (exports.isInPush) {
+    else if (github.context.eventName == 'push') {
         return github.context.payload.before;
     }
     else {
