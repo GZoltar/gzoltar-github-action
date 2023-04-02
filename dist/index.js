@@ -17339,7 +17339,7 @@ async function getDiff(authToken) {
                 let nextIndex = 0;
                 let firstIndex = 0;
                 while (nextIndex !== -1 && firstIndex !== -1) {
-                    firstIndex = file.patch.indexOf('@@', nextIndex + 1);
+                    firstIndex = file.patch.indexOf('@@', nextIndex == 0 ? nextIndex : nextIndex + 1);
                     if (firstIndex !== -1) {
                         nextIndex = file.patch.indexOf('@@', firstIndex + 1);
                         if (nextIndex !== -1) {
