@@ -17135,10 +17135,10 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
             let lineCoveredTestsString = '';
             if (lineCoveredTests.length > 0) {
                 lineCoveredTestsString =
-                    '<br><details><summary>Tests that cover this line</summary>';
-                lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Runtime</th><th>Stacktrace</th></tr></thead><tbody>`;
+                    '<details><summary>Tests that cover this line</summary>';
+                lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
                 lineCoveredTests.forEach(testCase => {
-                    lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.runtime} ns</td><td>${testCase.stacktrace
+                    lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
                         ? testCase.stacktrace.length > 50
                             ? `${testCase.stacktrace.substring(0, 50)}<details><summary>...</summary>${testCase.stacktrace.substring(50)}</details>`
                             : testCase.stacktrace
