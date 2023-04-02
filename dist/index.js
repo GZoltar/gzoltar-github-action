@@ -17083,15 +17083,15 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
                         line.lineNumber > lines[index - 1].lineNumber + 1) {
                         let previousLineNumber = lines[index - 1].lineNumber;
                         while (previousLineNumber < line.lineNumber - 1) {
-                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** ---<br>`;
+                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** ----<br>`;
                             previousLineNumber++;
                         }
                     }
                     if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`;
+                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
                     }
                     else {
-                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---`;
+                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ----`;
                     }
                     return returnSuspiciousnessForThisLineAndAlgorithm;
                 });
@@ -17169,7 +17169,7 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
                 if (suspiciousness == undefined) {
                     suspiciousness = '---';
                 }
-                return suspiciousness;
+                return getColoredSuspiciousness(suspiciousness);
             });
             bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(' | ')}|\n`;
         });
@@ -17235,6 +17235,28 @@ function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
         stacktraceToReturn += '</details>';
     }
     return stacktrace;
+}
+function getColoredSuspiciousness(suspiciousness) {
+    let color = 'white';
+    if (suspiciousness !== '' && suspiciousness !== '---') {
+        const suspiciousnessValue = parseFloat(suspiciousness);
+        if (suspiciousnessValue > 0.9) {
+            color = 'red';
+        }
+        else if (suspiciousnessValue > 0.75) {
+            color = 'orange';
+        }
+        else if (suspiciousnessValue > 0.5) {
+            color = 'yellow';
+        }
+        else if (suspiciousnessValue > 0.25) {
+            color = 'lightgreen';
+        }
+        else {
+            color = 'green';
+        }
+    }
+    return '$${\\color{' + color + '}' + suspiciousness + '}$$';
 }
 function getOctokit(authToken) {
     return github.getOctokit(authToken);

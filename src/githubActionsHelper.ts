@@ -211,15 +211,19 @@ function getStringTableLineSuspiciousnessWithCodeBlock(
               while (previousLineNumber < line.lineNumber - 1) {
                 returnSuspiciousnessForThisLineAndAlgorithm += `**L${
                   previousLineNumber + 1
-                } 𑗅** ---<br>`
+                } 𑗅** ----<br>`
                 previousLineNumber++
               }
             }
 
             if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-              returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${suspiciousnessForThisLineAndAlgorithm}`
+              returnSuspiciousnessForThisLineAndAlgorithm += `**L${
+                line.lineNumber
+              } 𑗅** ${getColoredSuspiciousness(
+                suspiciousnessForThisLineAndAlgorithm
+              )}`
             } else {
-              returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---`
+              returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ----`
             }
             return returnSuspiciousnessForThisLineAndAlgorithm
           })
@@ -329,7 +333,7 @@ function getStringTableLineSuspiciousness(
         if (suspiciousness == undefined) {
           suspiciousness = '---'
         }
-        return suspiciousness
+        return getColoredSuspiciousness(suspiciousness)
       })
 
       bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(
@@ -408,6 +412,25 @@ function substringStacktraceOnlyOnSpaces(
     stacktraceToReturn += '</details>'
   }
   return stacktrace
+}
+
+function getColoredSuspiciousness(suspiciousness: string): string {
+  let color = 'white'
+  if (suspiciousness !== '' && suspiciousness !== '---') {
+    const suspiciousnessValue = parseFloat(suspiciousness)
+    if (suspiciousnessValue > 0.9) {
+      color = 'red'
+    } else if (suspiciousnessValue > 0.75) {
+      color = 'orange'
+    } else if (suspiciousnessValue > 0.5) {
+      color = 'yellow'
+    } else if (suspiciousnessValue > 0.25) {
+      color = 'lightgreen'
+    } else {
+      color = 'green'
+    }
+  }
+  return '$${\\color{' + color + '}' + suspiciousness + '}$$'
 }
 
 function getOctokit(authToken: string) {
