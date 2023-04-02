@@ -17321,7 +17321,44 @@ async function getDiff(authToken) {
         if (response.data.status !== 'ahead') {
             throw new Error(`The head commit is not ahead of the base commit.`);
         }
-        console.log(response.data.files);
+        const statusConsidered = [
+            'added',
+            'modified',
+            'renamed',
+            'copied',
+            'changed',
+            'unchanged'
+        ];
+        const files = response.data.files?.filter(file => {
+            return statusConsidered.includes(file.status);
+        }) ?? [];
+        const filesOnDiff = [];
+        files.forEach(file => {
+            const changedLines = [];
+            if (file.patch) {
+                let nextIndex = 0;
+                let firstIndex = 0;
+                while (nextIndex !== -1 && firstIndex !== -1) {
+                    firstIndex = file.patch.indexOf('@@', nextIndex + 1);
+                    if (firstIndex !== -1) {
+                        nextIndex = file.patch.indexOf('@@', firstIndex + 1);
+                        if (nextIndex !== -1) {
+                            const line = file.patch.substring(firstIndex, nextIndex);
+                            const lineSplitted = line.split(' ');
+                            const lineSplitted2 = lineSplitted[1].split(',');
+                            const startLine = parseInt(lineSplitted2[0].substring(1));
+                            const sizeOfBlock = parseInt(lineSplitted2[1]);
+                            changedLines.push({
+                                startLine: startLine,
+                                endLine: startLine + sizeOfBlock - 1
+                            });
+                        }
+                    }
+                }
+            }
+            filesOnDiff.push({ path: file.filename, changedLines: changedLines });
+        });
+        console.log(filesOnDiff);
     }
     catch (error) {
         throw new Error(`Encountered an error when getting diff: ${error?.message ?? error}`);
