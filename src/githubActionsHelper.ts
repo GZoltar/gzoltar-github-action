@@ -183,12 +183,12 @@ export async function getDiff(authToken: string) {
             if (nextIndex !== -1) {
               const line = file.patch.substring(firstIndex, nextIndex)
               const lineSplitted = line.split(' ')
-              const lineSplitted2 = lineSplitted[1].split(',')
+              const lineSplitted2 = lineSplitted[2].split(',')
               const startLine = parseInt(lineSplitted2[0].substring(1))
-              const sizeOfBlock = parseInt(lineSplitted2[1])
+              const sizeOfCodeBlock = parseInt(lineSplitted2[1])
               changedLines.push({
                 startLine: startLine,
-                endLine: startLine + sizeOfBlock - 1
+                endLine: startLine + sizeOfCodeBlock - 1
               })
             }
           }
@@ -200,7 +200,6 @@ export async function getDiff(authToken: string) {
 
     console.log(filesOnDiff)
     console.log(filesOnDiff[0].changedLines)
-
   } catch (error) {
     throw new Error(
       `Encountered an error when getting diff: ${
