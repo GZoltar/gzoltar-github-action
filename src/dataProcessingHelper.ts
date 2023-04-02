@@ -164,6 +164,75 @@ export function getStringTableLineSuspiciousnessWithCodeBlock(
   return bodyToReturn
 }
 
+export function getStringTableLineSuspiciousnessForSingleLine(
+  line: ISourceCodeLine,
+  sflRanking: string[],
+  testCases: ITestCase[]
+) {
+  let bodyToReturn = ''
+
+  const lineLocation =
+    line.method.file.path != undefined
+      ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
+      : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`
+
+  const lineCoveredTests = testCases
+    .filter(testCase =>
+      testCase.coverage.some(
+        coverage => coverage.line === line && coverage.covered
+      )
+    ) // Sort the tests so that the ones that passed are last
+    .sort((a, b) => {
+      if (a.passed && !b.passed) {
+        return 1
+      }
+      if (!a.passed && b.passed) {
+        return -1
+      }
+      return 0
+    })
+
+  // Create a string with the tests that cover this line
+  let lineCoveredTestsString = ''
+
+  if (lineCoveredTests.length > 0) {
+    lineCoveredTestsString =
+      '<details><summary>Tests that cover this line</summary>'
+
+    lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`
+
+    lineCoveredTests.forEach(testCase => {
+      lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${
+        testCase.passed ? '✅' : '❌'
+      }</td><td>${
+        testCase.stacktrace
+          ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
+          : '---'
+      }</td></tr>`
+    })
+    lineCoveredTestsString += '</tbody></table></details>'
+  }
+
+  // Get the suspiciousness values for each algorithm and line in the group
+  const suspiciousnesses: string[] = sflRanking.map(algorithm => {
+    let suspiciousness = line.suspiciousnessMetrics
+      .find(obj => obj.algorithm === algorithm)
+      ?.suspiciousnessValue.toFixed(2)
+
+    if (suspiciousness == undefined) {
+      suspiciousness = '---'
+    }
+    return getColoredSuspiciousness(suspiciousness)
+  })
+
+  // Add a row for the group of lines and their suspiciousness values
+  bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(
+    ' | '
+  )}|\n`
+
+  return bodyToReturn
+}
+
 export function getStringTableLineSuspiciousness(
   lines: ISourceCodeLine[],
   sflRanking: string[],
@@ -198,64 +267,11 @@ export function getStringTableLineSuspiciousness(
 
     // Iterate over each line
     lines.forEach(line => {
-      const lineLocation =
-        line.method.file.path != undefined
-          ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
-          : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`
-
-      const lineCoveredTests = testCases
-        .filter(testCase =>
-          testCase.coverage.some(
-            coverage => coverage.line === line && coverage.covered
-          )
-        ) // Sort the tests so that the ones that passed are last
-        .sort((a, b) => {
-          if (a.passed && !b.passed) {
-            return 1
-          }
-          if (!a.passed && b.passed) {
-            return -1
-          }
-          return 0
-        })
-
-      // Create a string with the tests that cover this line
-      let lineCoveredTestsString = ''
-
-      if (lineCoveredTests.length > 0) {
-        lineCoveredTestsString =
-          '<details><summary>Tests that cover this line</summary>'
-
-        lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`
-
-        lineCoveredTests.forEach(testCase => {
-          lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${
-            testCase.passed ? '✅' : '❌'
-          }</td><td>${
-            testCase.stacktrace
-              ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
-              : '---'
-          }</td></tr>`
-        })
-        lineCoveredTestsString += '</tbody></table></details>'
-      }
-
-      // Get the suspiciousness values for each algorithm and line in the group
-      const suspiciousnesses: string[] = sflRanking.map(algorithm => {
-        let suspiciousness = line.suspiciousnessMetrics
-          .find(obj => obj.algorithm === algorithm)
-          ?.suspiciousnessValue.toFixed(2)
-
-        if (suspiciousness == undefined) {
-          suspiciousness = '---'
-        }
-        return getColoredSuspiciousness(suspiciousness)
-      })
-
-      // Add a row for the group of lines and their suspiciousness values
-      bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(
-        ' | '
-      )}|\n`
+      bodyToReturn += getStringTableLineSuspiciousnessForSingleLine(
+        line,
+        sflRanking,
+        testCases
+      )
     })
   }
   return bodyToReturn

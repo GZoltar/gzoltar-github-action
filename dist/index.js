@@ -16338,7 +16338,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessWithCodeBlock = void 0;
+exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessForSingleLine = exports.getStringTableLineSuspiciousnessWithCodeBlock = void 0;
 const stateHelper = __importStar(__nccwpck_require__(9319));
 function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder) {
     let bodyToReturn = '';
@@ -16457,6 +16457,47 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
     return bodyToReturn;
 }
 exports.getStringTableLineSuspiciousnessWithCodeBlock = getStringTableLineSuspiciousnessWithCodeBlock;
+function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases) {
+    let bodyToReturn = '';
+    const lineLocation = line.method.file.path != undefined
+        ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
+        : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
+    const lineCoveredTests = testCases
+        .filter(testCase => testCase.coverage.some(coverage => coverage.line === line && coverage.covered))
+        .sort((a, b) => {
+        if (a.passed && !b.passed) {
+            return 1;
+        }
+        if (!a.passed && b.passed) {
+            return -1;
+        }
+        return 0;
+    });
+    let lineCoveredTestsString = '';
+    if (lineCoveredTests.length > 0) {
+        lineCoveredTestsString =
+            '<details><summary>Tests that cover this line</summary>';
+        lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
+        lineCoveredTests.forEach(testCase => {
+            lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
+                ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
+                : '---'}</td></tr>`;
+        });
+        lineCoveredTestsString += '</tbody></table></details>';
+    }
+    const suspiciousnesses = sflRanking.map(algorithm => {
+        let suspiciousness = line.suspiciousnessMetrics
+            .find(obj => obj.algorithm === algorithm)
+            ?.suspiciousnessValue.toFixed(2);
+        if (suspiciousness == undefined) {
+            suspiciousness = '---';
+        }
+        return getColoredSuspiciousness(suspiciousness);
+    });
+    bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(' | ')}|\n`;
+    return bodyToReturn;
+}
+exports.getStringTableLineSuspiciousnessForSingleLine = getStringTableLineSuspiciousnessForSingleLine;
 function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases) {
     let bodyToReturn = '';
     sflRanking.sort((a, b) => {
@@ -16477,42 +16518,7 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
         }
         bodyToReturn += '\n';
         lines.forEach(line => {
-            const lineLocation = line.method.file.path != undefined
-                ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
-                : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
-            const lineCoveredTests = testCases
-                .filter(testCase => testCase.coverage.some(coverage => coverage.line === line && coverage.covered))
-                .sort((a, b) => {
-                if (a.passed && !b.passed) {
-                    return 1;
-                }
-                if (!a.passed && b.passed) {
-                    return -1;
-                }
-                return 0;
-            });
-            let lineCoveredTestsString = '';
-            if (lineCoveredTests.length > 0) {
-                lineCoveredTestsString =
-                    '<details><summary>Tests that cover this line</summary>';
-                lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
-                lineCoveredTests.forEach(testCase => {
-                    lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
-                        ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
-                        : '---'}</td></tr>`;
-                });
-                lineCoveredTestsString += '</tbody></table></details>';
-            }
-            const suspiciousnesses = sflRanking.map(algorithm => {
-                let suspiciousness = line.suspiciousnessMetrics
-                    .find(obj => obj.algorithm === algorithm)
-                    ?.suspiciousnessValue.toFixed(2);
-                if (suspiciousness == undefined) {
-                    suspiciousness = '---';
-                }
-                return getColoredSuspiciousness(suspiciousness);
-            });
-            bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(' | ')}|\n`;
+            bodyToReturn += getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases);
         });
     }
     return bodyToReturn;
@@ -17227,7 +17233,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.uploadArtifacts = exports.getDiff = exports.createCommitPRCommentLineSuspiciousnessThreshold = void 0;
+exports.uploadArtifacts = exports.createCommitPRCommentLineSuspiciousnessThreshold = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
@@ -17273,6 +17279,19 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         }
         body += '\n\n';
         await createCommitPRComment(authToken, { body });
+        const filesOnDiff = await getFilesOnDiff(authToken);
+        lines.forEach(line => {
+            const fileOnDiff = filesOnDiff.find(file => file.path === line.method.file.path);
+            if (fileOnDiff) {
+                if (fileOnDiff.changedLines.some(changed => changed.startLine <= line.lineNumber &&
+                    changed.endLine >= line.lineNumber)) {
+                    createCommitPRComment(authToken, {
+                        body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases),
+                        line: line.lineNumber
+                    });
+                }
+            }
+        });
     }
     catch (error) {
         throw new Error(`Encountered an error when creating Commit/PR comment based on threshold of algorithms: ${error?.message ?? error}`);
@@ -17306,7 +17325,7 @@ async function createCommitPRComment(authToken, inputs) {
         throw new Error(`Encountered an error when creating Commit/PR comment: ${error?.message ?? error}`);
     }
 }
-async function getDiff(authToken) {
+async function getFilesOnDiff(authToken) {
     try {
         const octokit = getOctokit(authToken);
         const response = await octokit.rest.repos.compareCommits({
@@ -17358,14 +17377,12 @@ async function getDiff(authToken) {
             }
             filesOnDiff.push({ path: file.filename, changedLines: changedLines });
         });
-        console.log(filesOnDiff);
-        console.log(filesOnDiff[0].changedLines);
+        return filesOnDiff;
     }
     catch (error) {
         throw new Error(`Encountered an error when getting diff: ${error?.message ?? error}`);
     }
 }
-exports.getDiff = getDiff;
 function getOctokit(authToken) {
     return github.getOctokit(authToken);
 }
@@ -17548,7 +17565,6 @@ async function run() {
             core.info(`Uploading artifacts...`);
             await githubActionsHelper.uploadArtifacts('GZoltar Results', fileParser.filePaths);
         }
-        await githubActionsHelper.getDiff(inputs.authToken);
     }
     catch (error) {
         core.setFailed(`${error?.message ?? error}`);

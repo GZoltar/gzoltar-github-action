@@ -6,6 +6,7 @@ import * as stateHelper from './stateHelper'
 import * as dataProcessingHelper from './dataProcessingHelper'
 import {ISourceCodeLine} from './types/sourceCodeLine'
 import {ITestCase} from './types/testCase'
+import {IFileOnDiff} from './types/fileOnDiff'
 
 export async function createCommitPRCommentLineSuspiciousnessThreshold(
   authToken: string,
@@ -53,6 +54,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       return bSuspiciousnessValue - aSuspiciousnessValue
     })
 
+    // Create comment on commit/PR
     if (lines.length === 0) {
       body += "✅ **GZoltar didn't find any possible bug in your code** 🙌"
     } else {
@@ -82,6 +84,35 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     body += '\n\n'
 
     await createCommitPRComment(authToken, {body})
+
+    // Create comment on diff of commit
+
+    const filesOnDiff: IFileOnDiff[] = await getFilesOnDiff(authToken)
+
+    lines.forEach(line => {
+      const fileOnDiff = filesOnDiff.find(
+        file => file.path === line.method.file.path
+      )
+
+      if (fileOnDiff) {
+        if (
+          fileOnDiff.changedLines.some(
+            changed =>
+              changed.startLine <= line.lineNumber &&
+              changed.endLine >= line.lineNumber
+          )
+        ) {
+          createCommitPRComment(authToken, {
+            body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(
+              line,
+              sflRanking,
+              testCases
+            ),
+            line: line.lineNumber
+          })
+        }
+      }
+    })
   } catch (error) {
     throw new Error(
       `Encountered an error when creating Commit/PR comment based on threshold of algorithms: ${
@@ -125,7 +156,7 @@ async function createCommitPRComment(
   }
 }
 
-export async function getDiff(authToken: string) {
+async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
   try {
     const octokit = getOctokit(authToken)
 
@@ -162,10 +193,7 @@ export async function getDiff(authToken: string) {
         return statusConsidered.includes(file.status)
       }) ?? []
 
-    const filesOnDiff: {
-      path: string
-      changedLines: {startLine: number; endLine: number}[]
-    }[] = []
+    const filesOnDiff: IFileOnDiff[] = []
 
     files.forEach(file => {
       const changedLines: {startLine: number; endLine: number}[] = []
@@ -198,8 +226,7 @@ export async function getDiff(authToken: string) {
       filesOnDiff.push({path: file.filename, changedLines: changedLines})
     })
 
-    console.log(filesOnDiff)
-    console.log(filesOnDiff[0].changedLines)
+    return filesOnDiff
   } catch (error) {
     throw new Error(
       `Encountered an error when getting diff: ${

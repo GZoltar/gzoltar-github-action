@@ -42,8 +42,6 @@ async function run(): Promise<void> {
         fileParser.filePaths
       )
     }
-
-    await githubActionsHelper.getDiff(inputs.authToken)
   } catch (error) {
     core.setFailed(`${(error as any)?.message ?? error}`)
   }
