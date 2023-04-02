@@ -16309,6 +16309,283 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 2209:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessWithCodeBlock = void 0;
+const stateHelper = __importStar(__nccwpck_require__(9319));
+function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder) {
+    let bodyToReturn = '';
+    sflRanking.sort((a, b) => {
+        if (a === sflRankingOrder) {
+            return -1;
+        }
+        if (b === sflRankingOrder) {
+            return 1;
+        }
+        return 0;
+    });
+    const linesByMethod = [];
+    const linesNextToEachOther = [];
+    const lineSeparationThreshold = 5;
+    const uniqueMethods = [...new Set(lines.map(line => line.method))];
+    uniqueMethods.forEach(method => {
+        linesByMethod.push(lines.filter(line => line.method === method));
+    });
+    linesByMethod.forEach(linesOfMethod => {
+        linesOfMethod.sort((a, b) => a.lineNumber - b.lineNumber);
+        let currentLinesNextToEachOther = [];
+        linesOfMethod.forEach(line => {
+            if (currentLinesNextToEachOther.length === 0 ||
+                line.lineNumber -
+                    currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
+                        .lineNumber <=
+                    lineSeparationThreshold) {
+                currentLinesNextToEachOther.push(line);
+            }
+            else {
+                linesNextToEachOther.push(currentLinesNextToEachOther);
+                currentLinesNextToEachOther = [line];
+            }
+        });
+        if (currentLinesNextToEachOther.length > 0) {
+            linesNextToEachOther.push(currentLinesNextToEachOther);
+        }
+    });
+    linesNextToEachOther.sort((a, b) => {
+        const maxA = a
+            .map(line => {
+            const suspiciousnessValue = line.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
+            if (suspiciousnessValue === undefined) {
+                return 0;
+            }
+            return suspiciousnessValue;
+        })
+            .reduce((a, b) => Math.max(a, b));
+        const maxB = b
+            .map(line => {
+            const suspiciousnessValue = line.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
+            if (suspiciousnessValue === undefined) {
+                return 0;
+            }
+            return suspiciousnessValue;
+        })
+            .reduce((a, b) => Math.max(a, b));
+        return maxB - maxA;
+    });
+    if (linesNextToEachOther.length > 0) {
+        bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`;
+        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
+        bodyToReturn += '|---|';
+        for (let i = 0; i < sflRanking.length; i++) {
+            bodyToReturn += ':---:|';
+        }
+        bodyToReturn += '\n';
+        linesNextToEachOther.forEach(lines => {
+            const lineLocation = (lines[0].method.file.path
+                ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
+                : `${lines[0].method.file.name}$${lines[0].method.name}`) +
+                `#L${lines[0].lineNumber}${lines.length > 1 ? `-L${lines[lines.length - 1].lineNumber}` : ''}`;
+            const suspiciousnesses = sflRanking
+                .map(algorithm => {
+                return lines.map((line, index) => {
+                    let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
+                        .find(obj => obj.algorithm === algorithm)
+                        ?.suspiciousnessValue.toFixed(2);
+                    let returnSuspiciousnessForThisLineAndAlgorithm = '';
+                    if (index != 0 &&
+                        line.lineNumber > lines[index - 1].lineNumber + 1) {
+                        let previousLineNumber = lines[index - 1].lineNumber;
+                        while (previousLineNumber < line.lineNumber - 1) {
+                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
+                            previousLineNumber++;
+                        }
+                    }
+                    if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
+                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
+                    }
+                    else {
+                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
+                    }
+                    return returnSuspiciousnessForThisLineAndAlgorithm;
+                });
+            })
+                .map(suspiciousnesses => {
+                let suspiciousnessesString = '';
+                suspiciousnesses.forEach((suspiciousness, index) => {
+                    if (index != 0) {
+                        suspiciousnessesString += '<br>';
+                    }
+                    if (suspiciousness === undefined) {
+                        suspiciousnessesString += '---';
+                    }
+                    else {
+                        suspiciousnessesString += suspiciousness;
+                    }
+                });
+                return suspiciousnessesString;
+            });
+            bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}|\n`;
+        });
+    }
+    return bodyToReturn;
+}
+exports.getStringTableLineSuspiciousnessWithCodeBlock = getStringTableLineSuspiciousnessWithCodeBlock;
+function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases) {
+    let bodyToReturn = '';
+    sflRanking.sort((a, b) => {
+        if (a === sflRankingOrder) {
+            return -1;
+        }
+        if (b === sflRankingOrder) {
+            return 1;
+        }
+        return 0;
+    });
+    if (lines.length > 0) {
+        bodyToReturn += `## Line Suspiciousness by Algorithm\n`;
+        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
+        bodyToReturn += '|---|';
+        for (let i = 0; i < sflRanking.length; i++) {
+            bodyToReturn += ':---:|';
+        }
+        bodyToReturn += '\n';
+        lines.forEach(line => {
+            const lineLocation = line.method.file.path != undefined
+                ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
+                : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
+            const lineCoveredTests = testCases
+                .filter(testCase => testCase.coverage.some(coverage => coverage.line === line && coverage.covered))
+                .sort((a, b) => {
+                if (a.passed && !b.passed) {
+                    return 1;
+                }
+                if (!a.passed && b.passed) {
+                    return -1;
+                }
+                return 0;
+            });
+            let lineCoveredTestsString = '';
+            if (lineCoveredTests.length > 0) {
+                lineCoveredTestsString =
+                    '<details><summary>Tests that cover this line</summary>';
+                lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
+                lineCoveredTests.forEach(testCase => {
+                    lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
+                        ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
+                        : '---'}</td></tr>`;
+                });
+                lineCoveredTestsString += '</tbody></table></details>';
+            }
+            const suspiciousnesses = sflRanking.map(algorithm => {
+                let suspiciousness = line.suspiciousnessMetrics
+                    .find(obj => obj.algorithm === algorithm)
+                    ?.suspiciousnessValue.toFixed(2);
+                if (suspiciousness == undefined) {
+                    suspiciousness = '---';
+                }
+                return getColoredSuspiciousness(suspiciousness);
+            });
+            bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(' | ')}|\n`;
+        });
+    }
+    return bodyToReturn;
+}
+exports.getStringTableLineSuspiciousness = getStringTableLineSuspiciousness;
+function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
+    let stacktraceToReturn = '';
+    let stacktraceAfterSubstring = '';
+    if (stacktrace.length > maxLength) {
+        let indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ');
+        if (indexOfSpace < 25) {
+            const newIndexOfSpace = stacktrace.substring(maxLength).indexOf(' ');
+            indexOfSpace =
+                newIndexOfSpace > 0 ? newIndexOfSpace + maxLength : indexOfSpace;
+        }
+        stacktraceToReturn += '```' + stacktrace.substring(0, indexOfSpace) + '```';
+        stacktraceAfterSubstring = stacktrace.substring(indexOfSpace + 1);
+        stacktraceToReturn += '<details><summary>...</summary>';
+        while (stacktraceAfterSubstring.length > maxLength) {
+            let innerIndexOfSpace = stacktraceAfterSubstring
+                .substring(0, maxLength)
+                .lastIndexOf(' ');
+            if (innerIndexOfSpace < 25) {
+                const newInnerIndexOfSpace = stacktraceAfterSubstring
+                    .substring(maxLength)
+                    .indexOf(' ');
+                innerIndexOfSpace =
+                    newInnerIndexOfSpace > 0
+                        ? newInnerIndexOfSpace + maxLength
+                        : innerIndexOfSpace;
+            }
+            stacktraceToReturn +=
+                '```' +
+                    stacktraceAfterSubstring.substring(0, innerIndexOfSpace) +
+                    '```<br>';
+            stacktraceAfterSubstring = stacktraceAfterSubstring.substring(innerIndexOfSpace + 1);
+        }
+        if (stacktraceAfterSubstring.length > 0) {
+            stacktraceToReturn += '```' + stacktraceAfterSubstring + '```';
+        }
+        stacktraceToReturn += '</details>';
+        return stacktraceToReturn;
+    }
+    return stacktrace;
+}
+function getColoredSuspiciousness(suspiciousness) {
+    let color = undefined;
+    if (suspiciousness !== '' && suspiciousness !== '---') {
+        const suspiciousnessValue = parseFloat(suspiciousness);
+        if (suspiciousnessValue >= 0.9) {
+            color = 'aa0000';
+        }
+        else if (suspiciousnessValue >= 0.75) {
+            color = 'ff5f00';
+        }
+        else if (suspiciousnessValue >= 0.5) {
+            color = 'ffaf00';
+        }
+        else if (suspiciousnessValue >= 0.25) {
+            color = 'afff87';
+        }
+        else {
+            color = '00aa00';
+        }
+    }
+    return ((color != undefined
+        ? `![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
+        : '') + suspiciousness);
+}
+
+
+/***/ }),
+
 /***/ 7303:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -16950,11 +17227,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.uploadArtifacts = exports.createCommitPRCommentLineSuspiciousnessThreshold = void 0;
+exports.uploadArtifacts = exports.getDiff = exports.createCommitPRCommentLineSuspiciousnessThreshold = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const stateHelper = __importStar(__nccwpck_require__(9319));
+const dataProcessingHelper = __importStar(__nccwpck_require__(2209));
 async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines, testCases) {
     try {
         let body = '';
@@ -16985,11 +17263,12 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             body += '⚠️ **GZoltar found possible bugs** ⚠️';
             body +=
                 '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';
-            body += getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases);
+            body += dataProcessingHelper.getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases);
             body += '</details>\n';
             body +=
                 '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n';
-            body += getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder);
+            body +=
+                dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder);
             body += '</details>\n';
         }
         body += '\n\n';
@@ -17000,268 +17279,55 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
     }
 }
 exports.createCommitPRCommentLineSuspiciousnessThreshold = createCommitPRCommentLineSuspiciousnessThreshold;
-function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder) {
-    let bodyToReturn = '';
-    sflRanking.sort((a, b) => {
-        if (a === sflRankingOrder) {
-            return -1;
-        }
-        if (b === sflRankingOrder) {
-            return 1;
-        }
-        return 0;
-    });
-    const linesByMethod = [];
-    const linesNextToEachOther = [];
-    const lineSeparationThreshold = 5;
-    const uniqueMethods = [...new Set(lines.map(line => line.method))];
-    uniqueMethods.forEach(method => {
-        linesByMethod.push(lines.filter(line => line.method === method));
-    });
-    linesByMethod.forEach(linesOfMethod => {
-        linesOfMethod.sort((a, b) => a.lineNumber - b.lineNumber);
-        let currentLinesNextToEachOther = [];
-        linesOfMethod.forEach(line => {
-            if (currentLinesNextToEachOther.length === 0 ||
-                line.lineNumber -
-                    currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
-                        .lineNumber <=
-                    lineSeparationThreshold) {
-                currentLinesNextToEachOther.push(line);
-            }
-            else {
-                linesNextToEachOther.push(currentLinesNextToEachOther);
-                currentLinesNextToEachOther = [line];
-            }
-        });
-        if (currentLinesNextToEachOther.length > 0) {
-            linesNextToEachOther.push(currentLinesNextToEachOther);
-        }
-    });
-    linesNextToEachOther.sort((a, b) => {
-        const maxA = a
-            .map(line => {
-            const suspiciousnessValue = line.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
-            if (suspiciousnessValue === undefined) {
-                return 0;
-            }
-            return suspiciousnessValue;
-        })
-            .reduce((a, b) => Math.max(a, b));
-        const maxB = b
-            .map(line => {
-            const suspiciousnessValue = line.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
-            if (suspiciousnessValue === undefined) {
-                return 0;
-            }
-            return suspiciousnessValue;
-        })
-            .reduce((a, b) => Math.max(a, b));
-        return maxB - maxA;
-    });
-    if (linesNextToEachOther.length > 0) {
-        bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`;
-        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
-        bodyToReturn += '|---|';
-        for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += ':---:|';
-        }
-        bodyToReturn += '\n';
-        linesNextToEachOther.forEach(lines => {
-            const lineLocation = (lines[0].method.file.path
-                ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
-                : `${lines[0].method.file.name}$${lines[0].method.name}`) +
-                `#L${lines[0].lineNumber}${lines.length > 1 ? `-L${lines[lines.length - 1].lineNumber}` : ''}`;
-            const suspiciousnesses = sflRanking
-                .map(algorithm => {
-                return lines.map((line, index) => {
-                    let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
-                        .find(obj => obj.algorithm === algorithm)
-                        ?.suspiciousnessValue.toFixed(2);
-                    let returnSuspiciousnessForThisLineAndAlgorithm = '';
-                    if (index != 0 &&
-                        line.lineNumber > lines[index - 1].lineNumber + 1) {
-                        let previousLineNumber = lines[index - 1].lineNumber;
-                        while (previousLineNumber < line.lineNumber - 1) {
-                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
-                            previousLineNumber++;
-                        }
-                    }
-                    if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
-                    }
-                    else {
-                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
-                    }
-                    return returnSuspiciousnessForThisLineAndAlgorithm;
-                });
-            })
-                .map(suspiciousnesses => {
-                let suspiciousnessesString = '';
-                suspiciousnesses.forEach((suspiciousness, index) => {
-                    if (index != 0) {
-                        suspiciousnessesString += '<br>';
-                    }
-                    if (suspiciousness === undefined) {
-                        suspiciousnessesString += '---';
-                    }
-                    else {
-                        suspiciousnessesString += suspiciousness;
-                    }
-                });
-                return suspiciousnessesString;
-            });
-            bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}|\n`;
-        });
-    }
-    return bodyToReturn;
-}
-function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases) {
-    let bodyToReturn = '';
-    sflRanking.sort((a, b) => {
-        if (a === sflRankingOrder) {
-            return -1;
-        }
-        if (b === sflRankingOrder) {
-            return 1;
-        }
-        return 0;
-    });
-    if (lines.length > 0) {
-        bodyToReturn += `## Line Suspiciousness by Algorithm\n`;
-        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
-        bodyToReturn += '|---|';
-        for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += ':---:|';
-        }
-        bodyToReturn += '\n';
-        lines.forEach(line => {
-            const lineLocation = line.method.file.path != undefined
-                ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
-                : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
-            const lineCoveredTests = testCases
-                .filter(testCase => testCase.coverage.some(coverage => coverage.line === line && coverage.covered))
-                .sort((a, b) => {
-                if (a.passed && !b.passed) {
-                    return 1;
-                }
-                if (!a.passed && b.passed) {
-                    return -1;
-                }
-                return 0;
-            });
-            let lineCoveredTestsString = '';
-            if (lineCoveredTests.length > 0) {
-                lineCoveredTestsString =
-                    '<details><summary>Tests that cover this line</summary>';
-                lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
-                lineCoveredTests.forEach(testCase => {
-                    lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
-                        ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
-                        : '---'}</td></tr>`;
-                });
-                lineCoveredTestsString += '</tbody></table></details>';
-            }
-            const suspiciousnesses = sflRanking.map(algorithm => {
-                let suspiciousness = line.suspiciousnessMetrics
-                    .find(obj => obj.algorithm === algorithm)
-                    ?.suspiciousnessValue.toFixed(2);
-                if (suspiciousness == undefined) {
-                    suspiciousness = '---';
-                }
-                return getColoredSuspiciousness(suspiciousness);
-            });
-            bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(' | ')}|\n`;
-        });
-    }
-    return bodyToReturn;
-}
 async function createCommitPRComment(authToken, inputs) {
-    const octokit = getOctokit(authToken);
-    if (stateHelper.isInPullRequest) {
-        await octokit.rest.issues.createComment({
-            owner: stateHelper.repoOwner,
-            repo: stateHelper.repoName,
-            issue_number: stateHelper.pullRequestNumber,
-            body: inputs.body
-        });
-    }
-    else {
-        await octokit.rest.repos.createCommitComment({
-            owner: stateHelper.repoOwner,
-            repo: stateHelper.repoName,
-            commit_sha: stateHelper.currentSha,
-            body: inputs.body,
-            path: inputs.path,
-            position: inputs.position,
-            line: inputs.line
-        });
-    }
-}
-function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
-    let stacktraceToReturn = '';
-    let stacktraceAfterSubstring = '';
-    if (stacktrace.length > maxLength) {
-        let indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ');
-        if (indexOfSpace < 25) {
-            const newIndexOfSpace = stacktrace.substring(maxLength).indexOf(' ');
-            indexOfSpace =
-                newIndexOfSpace > 0 ? newIndexOfSpace + maxLength : indexOfSpace;
-        }
-        stacktraceToReturn += '```' + stacktrace.substring(0, indexOfSpace) + '```';
-        stacktraceAfterSubstring = stacktrace.substring(indexOfSpace + 1);
-        stacktraceToReturn += '<details><summary>...</summary>';
-        while (stacktraceAfterSubstring.length > maxLength) {
-            let innerIndexOfSpace = stacktraceAfterSubstring
-                .substring(0, maxLength)
-                .lastIndexOf(' ');
-            if (innerIndexOfSpace < 25) {
-                const newInnerIndexOfSpace = stacktraceAfterSubstring
-                    .substring(maxLength)
-                    .indexOf(' ');
-                innerIndexOfSpace =
-                    newInnerIndexOfSpace > 0
-                        ? newInnerIndexOfSpace + maxLength
-                        : innerIndexOfSpace;
-            }
-            stacktraceToReturn +=
-                '```' +
-                    stacktraceAfterSubstring.substring(0, innerIndexOfSpace) +
-                    '```<br>';
-            stacktraceAfterSubstring = stacktraceAfterSubstring.substring(innerIndexOfSpace + 1);
-        }
-        if (stacktraceAfterSubstring.length > 0) {
-            stacktraceToReturn += '```' + stacktraceAfterSubstring + '```';
-        }
-        stacktraceToReturn += '</details>';
-        return stacktraceToReturn;
-    }
-    return stacktrace;
-}
-function getColoredSuspiciousness(suspiciousness) {
-    let color = undefined;
-    if (suspiciousness !== '' && suspiciousness !== '---') {
-        const suspiciousnessValue = parseFloat(suspiciousness);
-        if (suspiciousnessValue >= 0.9) {
-            color = 'aa0000';
-        }
-        else if (suspiciousnessValue >= 0.75) {
-            color = 'ff5f00';
-        }
-        else if (suspiciousnessValue >= 0.5) {
-            color = 'ffaf00';
-        }
-        else if (suspiciousnessValue >= 0.25) {
-            color = 'afff87';
+    try {
+        const octokit = getOctokit(authToken);
+        if (stateHelper.isInPullRequest) {
+            await octokit.rest.issues.createComment({
+                owner: stateHelper.repoOwner,
+                repo: stateHelper.repoName,
+                issue_number: stateHelper.pullRequestNumber,
+                body: inputs.body
+            });
         }
         else {
-            color = '00aa00';
+            await octokit.rest.repos.createCommitComment({
+                owner: stateHelper.repoOwner,
+                repo: stateHelper.repoName,
+                commit_sha: stateHelper.currentSha,
+                body: inputs.body,
+                path: inputs.path,
+                position: inputs.position,
+                line: inputs.line
+            });
         }
     }
-    return ((color != undefined
-        ? `![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
-        : '') + suspiciousness);
+    catch (error) {
+        throw new Error(`Encountered an error when creating Commit/PR comment: ${error?.message ?? error}`);
+    }
 }
+async function getDiff(authToken) {
+    try {
+        const octokit = getOctokit(authToken);
+        const response = await octokit.rest.repos.compareCommits({
+            owner: stateHelper.repoOwner,
+            repo: stateHelper.repoName,
+            base: stateHelper.baseCommitSha,
+            head: stateHelper.currentCommitSha
+        });
+        if (response.status !== 200) {
+            throw new Error(`The request needed to get the diff between the base and head commits for this event returned ${response.status} when it is expected 200.`);
+        }
+        if (response.data.status !== 'ahead') {
+            throw new Error(`The head commit is not ahead of the base commit.`);
+        }
+        console.log(response.data.files);
+    }
+    catch (error) {
+        throw new Error(`Encountered an error when getting diff: ${error?.message ?? error}`);
+    }
+}
+exports.getDiff = getDiff;
 function getOctokit(authToken) {
     return github.getOctokit(authToken);
 }
@@ -17444,6 +17510,7 @@ async function run() {
             core.info(`Uploading artifacts...`);
             await githubActionsHelper.uploadArtifacts('GZoltar Results', fileParser.filePaths);
         }
+        await githubActionsHelper.getDiff(inputs.authToken);
     }
     catch (error) {
         core.setFailed(`${error?.message ?? error}`);
@@ -17485,20 +17552,33 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.repoName = exports.repoOwner = exports.rootDirectory = exports.currentSha = exports.pullRequestNumber = exports.isInPullRequest = exports.currentCommitSha = exports.IsPost = void 0;
+exports.repoName = exports.repoOwner = exports.rootDirectory = exports.currentSha = exports.pullRequestNumber = exports.isInPush = exports.isInPullRequest = exports.currentCommitSha = exports.baseCommitSha = exports.IsPost = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 exports.IsPost = !!core.getState('isPost');
 function getCurrentCommitSha() {
-    if (github.context.eventName == 'pull_request') {
+    if (exports.isInPullRequest) {
         return github.context.payload.pull_request?.head.sha;
     }
     else {
         return github.context.sha;
     }
 }
+function getBaseCommitSha() {
+    if (exports.isInPullRequest) {
+        return github.context.payload.pull_request?.base.sha;
+    }
+    else if (exports.isInPush) {
+        return github.context.payload.before;
+    }
+    else {
+        throw new Error(`This action only supports pull requests and pushes. ${github.context.eventName} events are not supported.`);
+    }
+}
+exports.baseCommitSha = getBaseCommitSha();
 exports.currentCommitSha = getCurrentCommitSha();
 exports.isInPullRequest = github.context.eventName == 'pull_request';
+exports.isInPush = github.context.eventName == 'push';
 exports.pullRequestNumber = github.context.issue.number;
 exports.currentSha = github.context.sha;
 function getRootDirectory() {

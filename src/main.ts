@@ -4,6 +4,7 @@ import * as stateHelper from './stateHelper'
 import FileParser from './fileParser'
 import * as inputHelper from './inputHelper'
 import * as githubActionsHelper from './githubActionsHelper'
+import {mainModule} from 'process'
 
 async function run(): Promise<void> {
   try {
@@ -41,6 +42,8 @@ async function run(): Promise<void> {
         fileParser.filePaths
       )
     }
+
+    await githubActionsHelper.getDiff(inputs.authToken)
   } catch (error) {
     core.setFailed(`${(error as any)?.message ?? error}`)
   }
