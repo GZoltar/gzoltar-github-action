@@ -283,14 +283,14 @@ function getStringTableLineSuspiciousness(
 
       if (lineCoveredTests.length > 0) {
         lineCoveredTestsString =
-          '<br><details><summary>Tests that cover this line</summary>'
+          '<details><summary>Tests that cover this line</summary>'
 
-        lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Runtime</th><th>Stacktrace</th></tr></thead><tbody>`
+        lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`
 
         lineCoveredTests.forEach(testCase => {
           lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${
             testCase.passed ? '✅' : '❌'
-          }</td><td>${testCase.runtime} ns</td><td>${
+          }</td><td>${
             testCase.stacktrace
               ? testCase.stacktrace.length > 50
                 ? `${testCase.stacktrace.substring(
