@@ -108,7 +108,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
               body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(
                 line,
                 sflRanking,
-                testCases
+                testCases,
+                true
               ),
               path: fileOnDiff.path,
               position: calculatePosition(

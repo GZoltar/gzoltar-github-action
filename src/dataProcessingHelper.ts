@@ -167,8 +167,12 @@ export function getStringTableLineSuspiciousnessWithCodeBlock(
 export function getStringTableLineSuspiciousnessForSingleLine(
   line: ISourceCodeLine,
   sflRanking: string[],
-  testCases: ITestCase[]
+  testCases: ITestCase[],
+  standAloneTableWithoutLineLocation?: boolean
 ) {
+  standAloneTableWithoutLineLocation =
+    standAloneTableWithoutLineLocation || false
+
   let bodyToReturn = ''
 
   const lineLocation =
@@ -225,10 +229,24 @@ export function getStringTableLineSuspiciousnessForSingleLine(
     return getColoredSuspiciousness(suspiciousness)
   })
 
+  if (standAloneTableWithoutLineLocation) {
+    bodyToReturn += `|⬇ ${sflRanking.join(' | ')}`
+    for (let i = 0; i < sflRanking.length; i++) {
+      bodyToReturn += ':---:|'
+    }
+    bodyToReturn += '\n'
+  }
+
   // Add a row for the group of lines and their suspiciousness values
-  bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(
-    ' | '
-  )}|\n`
+  bodyToReturn += `${
+    !standAloneTableWithoutLineLocation
+      ? '|' + lineLocation + lineCoveredTestsString
+      : ''
+  }| ${suspiciousnesses.join(' | ')}|\n`
+
+  if (standAloneTableWithoutLineLocation) {
+    bodyToReturn += '\n' + lineCoveredTestsString
+  }
 
   return bodyToReturn
 }

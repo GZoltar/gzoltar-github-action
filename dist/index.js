@@ -16457,7 +16457,9 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
     return bodyToReturn;
 }
 exports.getStringTableLineSuspiciousnessWithCodeBlock = getStringTableLineSuspiciousnessWithCodeBlock;
-function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases) {
+function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, standAloneTableWithoutLineLocation) {
+    standAloneTableWithoutLineLocation =
+        standAloneTableWithoutLineLocation || false;
     let bodyToReturn = '';
     const lineLocation = line.method.file.path != undefined
         ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
@@ -16494,7 +16496,19 @@ function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCas
         }
         return getColoredSuspiciousness(suspiciousness);
     });
-    bodyToReturn += `|${lineLocation}${lineCoveredTestsString}| ${suspiciousnesses.join(' | ')}|\n`;
+    if (standAloneTableWithoutLineLocation) {
+        bodyToReturn += `|⬇ ${sflRanking.join(' | ')}`;
+        for (let i = 0; i < sflRanking.length; i++) {
+            bodyToReturn += ':---:|';
+        }
+        bodyToReturn += '\n';
+    }
+    bodyToReturn += `${!standAloneTableWithoutLineLocation
+        ? '|' + lineLocation + lineCoveredTestsString
+        : ''}| ${suspiciousnesses.join(' | ')}|\n`;
+    if (standAloneTableWithoutLineLocation) {
+        bodyToReturn += '\n' + lineCoveredTestsString;
+    }
     return bodyToReturn;
 }
 exports.getStringTableLineSuspiciousnessForSingleLine = getStringTableLineSuspiciousnessForSingleLine;
@@ -17286,7 +17300,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 if (fileOnDiff.changedLines.some(changed => changed.startLine <= line.lineNumber &&
                     changed.endLine >= line.lineNumber)) {
                     createCommitPRComment(authToken, {
-                        body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases),
+                        body: dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, true),
                         path: fileOnDiff.path,
                         position: calculatePosition(fileOnDiff.changedLines, line.lineNumber)
                     }, true);
