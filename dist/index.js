@@ -17139,9 +17139,7 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
                 lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
                 lineCoveredTests.forEach(testCase => {
                     lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
-                        ? testCase.stacktrace.length > 50
-                            ? `${testCase.stacktrace.substring(0, 50)}<details><summary>...</summary>${testCase.stacktrace.substring(50)}</details>`
-                            : testCase.stacktrace
+                        ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 50)
                         : '---'}</td></tr>`;
                 });
                 lineCoveredTestsString += '</tbody></table></details>';
@@ -17181,6 +17179,31 @@ async function createCommitPRComment(authToken, inputs) {
             line: inputs.line
         });
     }
+}
+function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
+    let stacktraceToReturn = '';
+    let stacktraceAfterSubstring = '';
+    if (stacktrace.length > maxLength) {
+        const indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ');
+        if (indexOfSpace > 0) {
+            stacktraceToReturn += stacktrace.substring(0, indexOfSpace);
+            stacktraceAfterSubstring = stacktrace.substring(indexOfSpace);
+            stacktraceToReturn += '<details><summary>...</summary>';
+        }
+        while (stacktraceAfterSubstring.length > maxLength) {
+            const indexOfSpace = stacktraceAfterSubstring
+                .substring(0, maxLength)
+                .lastIndexOf(' ');
+            if (indexOfSpace > 0) {
+                stacktraceToReturn += stacktraceAfterSubstring.substring(0, indexOfSpace);
+                stacktraceAfterSubstring =
+                    stacktraceAfterSubstring.substring(indexOfSpace);
+            }
+        }
+        stacktraceToReturn += stacktraceAfterSubstring;
+        stacktraceToReturn += '</details>';
+    }
+    return stacktrace;
 }
 function getOctokit(authToken) {
     return github.getOctokit(authToken);

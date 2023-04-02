@@ -292,14 +292,7 @@ function getStringTableLineSuspiciousness(
             testCase.passed ? '✅' : '❌'
           }</td><td>${
             testCase.stacktrace
-              ? testCase.stacktrace.length > 50
-                ? `${testCase.stacktrace.substring(
-                    0,
-                    50
-                  )}<details><summary>...</summary>${testCase.stacktrace.substring(
-                    50
-                  )}</details>`
-                : testCase.stacktrace
+              ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 50)
               : '---'
           }</td></tr>`
         })
@@ -349,6 +342,41 @@ async function createCommitPRComment(
       line: inputs.line
     })
   }
+}
+
+function substringStacktraceOnlyOnSpaces(
+  stacktrace: string,
+  maxLength: number
+): string {
+  let stacktraceToReturn = ''
+  let stacktraceAfterSubstring = ''
+  if (stacktrace.length > maxLength) {
+    const indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ')
+    if (indexOfSpace > 0) {
+      stacktraceToReturn += stacktrace.substring(0, indexOfSpace)
+      stacktraceAfterSubstring = stacktrace.substring(indexOfSpace)
+      stacktraceToReturn += '<details><summary>...</summary>'
+    }
+
+    while (stacktraceAfterSubstring.length > maxLength) {
+      const indexOfSpace = stacktraceAfterSubstring
+        .substring(0, maxLength)
+        .lastIndexOf(' ')
+      if (indexOfSpace > 0) {
+        stacktraceToReturn += stacktraceAfterSubstring.substring(
+          0,
+          indexOfSpace
+        )
+        stacktraceAfterSubstring =
+          stacktraceAfterSubstring.substring(indexOfSpace)
+      }
+    }
+
+    stacktraceToReturn += stacktraceAfterSubstring
+
+    stacktraceToReturn += '</details>'
+  }
+  return stacktrace
 }
 
 function getOctokit(authToken: string) {
