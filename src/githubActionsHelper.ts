@@ -363,12 +363,16 @@ function substringStacktraceOnlyOnSpaces(
       stacktraceToReturn +=
         '```' + stacktrace.substring(0, indexOfSpace) + '```'
       stacktraceAfterSubstring = stacktrace.substring(indexOfSpace)
-      stacktraceToReturn += '<details><summary>...</summary>'
+    } else {
+      stacktraceToReturn += '```' + stacktrace.substring(0, maxLength) + '```'
+      stacktraceAfterSubstring = stacktrace.substring(maxLength)
     }
+
+    stacktraceToReturn += '<details><summary>...</summary>'
 
     while (stacktraceAfterSubstring.length > maxLength) {
       const indexOfSpace = stacktraceAfterSubstring
-        .substring(0, maxLength * 2)
+        .substring(0, maxLength)
         .lastIndexOf(' ')
       if (indexOfSpace > 0) {
         stacktraceToReturn +=
@@ -377,6 +381,10 @@ function substringStacktraceOnlyOnSpaces(
           '```'
         stacktraceAfterSubstring =
           stacktraceAfterSubstring.substring(indexOfSpace)
+      } else {
+        stacktraceToReturn +=
+          '<br> ```' + stacktraceAfterSubstring.substring(0, maxLength) + '```'
+        stacktraceAfterSubstring = stacktraceAfterSubstring.substring(maxLength)
       }
     }
 
