@@ -95,13 +95,18 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       )
 
       if (fileOnDiff) {
-        if (
-          fileOnDiff.changedLines.some(
-            changed =>
-              changed.startLine <= line.lineNumber &&
-              changed.endLine >= line.lineNumber
-          )
-        ) {
+        const changedLinesAffected:
+          | {
+              startLine: number
+              endLine: number
+            }
+          | undefined = fileOnDiff.changedLines.find(
+          changed =>
+            changed.startLine <= line.lineNumber &&
+            changed.endLine >= line.lineNumber
+        )
+
+        if (changedLinesAffected) {
           createCommitPRComment(
             authToken,
             {
@@ -115,10 +120,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
                 ) +
                 '</details>',
               path: fileOnDiff.path,
-              position: calculatePosition(
-                fileOnDiff.changedLines,
-                line.lineNumber
-              )
+              position: line.lineNumber - changedLinesAffected.startLine + 1
             },
             true
           )
@@ -132,23 +134,6 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       }`
     )
   }
-}
-
-function calculatePosition(
-  changedLine: {
-    startLine: number
-    endLine: number
-  }[],
-  lineNumber: number
-): number {
-  let position = 0
-  changedLine.forEach(changed => {
-    if (changed.startLine <= lineNumber && changed.endLine >= lineNumber) {
-      position += lineNumber - changed.startLine + 1
-    }
-  })
-
-  return position
 }
 
 async function createCommitPRComment(

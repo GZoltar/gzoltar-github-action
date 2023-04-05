@@ -17297,14 +17297,15 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         lines.forEach(line => {
             const fileOnDiff = filesOnDiff.find(file => '/' + file.path === line.method.file.path);
             if (fileOnDiff) {
-                if (fileOnDiff.changedLines.some(changed => changed.startLine <= line.lineNumber &&
-                    changed.endLine >= line.lineNumber)) {
+                const changedLinesAffected = fileOnDiff.changedLines.find(changed => changed.startLine <= line.lineNumber &&
+                    changed.endLine >= line.lineNumber);
+                if (changedLinesAffected) {
                     createCommitPRComment(authToken, {
                         body: '<details><summary>Line Suspiciousness by Algorithm</summary>\n\n## Line Suspiciousness by Algorithm\n' +
                             dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, true) +
                             '</details>',
                         path: fileOnDiff.path,
-                        position: calculatePosition(fileOnDiff.changedLines, line.lineNumber)
+                        position: line.lineNumber - changedLinesAffected.startLine + 1
                     }, true);
                 }
             }
@@ -17315,15 +17316,6 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
     }
 }
 exports.createCommitPRCommentLineSuspiciousnessThreshold = createCommitPRCommentLineSuspiciousnessThreshold;
-function calculatePosition(changedLine, lineNumber) {
-    let position = 0;
-    changedLine.forEach(changed => {
-        if (changed.startLine <= lineNumber && changed.endLine >= lineNumber) {
-            position += lineNumber - changed.startLine + 1;
-        }
-    });
-    return position;
-}
 async function createCommitPRComment(authToken, inputs, forceCommentOnCommit) {
     try {
         const octokit = getOctokit(authToken);
