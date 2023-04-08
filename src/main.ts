@@ -32,7 +32,8 @@ async function run(): Promise<void> {
       inputs.sflThreshold,
       inputs.sflRankingOrder,
       fileParser.sourceCodeLines,
-      fileParser.testCases
+      fileParser.testCases,
+      inputs.diffCommentsInCodeBlock
     )
 
     if (inputs.uploadArtifacts) {

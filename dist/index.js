@@ -16338,47 +16338,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessForSingleLine = exports.getStringTableLineSuspiciousnessWithCodeBlock = void 0;
+exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessForSingleLine = exports.getStringTableLineSuspiciousnessWithCodeBlock = exports.sortedGroupedLinesBySflRankingOrder = exports.groupLinesNextToEachOther = void 0;
 const stateHelper = __importStar(__nccwpck_require__(9319));
-function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder) {
-    let bodyToReturn = '';
-    sflRanking.sort((a, b) => {
-        if (a === sflRankingOrder) {
-            return -1;
-        }
-        if (b === sflRankingOrder) {
-            return 1;
-        }
-        return 0;
-    });
-    const linesByMethod = [];
+function groupLinesNextToEachOther(linesToBeGrouped, lineSeparationThreshold) {
     const linesNextToEachOther = [];
-    const lineSeparationThreshold = 5;
-    const uniqueMethods = [...new Set(lines.map(line => line.method))];
-    uniqueMethods.forEach(method => {
-        linesByMethod.push(lines.filter(line => line.method === method));
-    });
-    linesByMethod.forEach(linesOfMethod => {
-        linesOfMethod.sort((a, b) => a.lineNumber - b.lineNumber);
-        let currentLinesNextToEachOther = [];
-        linesOfMethod.forEach(line => {
-            if (currentLinesNextToEachOther.length === 0 ||
-                line.lineNumber -
-                    currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
-                        .lineNumber <=
-                    lineSeparationThreshold) {
-                currentLinesNextToEachOther.push(line);
-            }
-            else {
-                linesNextToEachOther.push(currentLinesNextToEachOther);
-                currentLinesNextToEachOther = [line];
-            }
-        });
-        if (currentLinesNextToEachOther.length > 0) {
+    lineSeparationThreshold = lineSeparationThreshold || 5;
+    linesToBeGrouped.sort((a, b) => a.lineNumber - b.lineNumber);
+    let currentLinesNextToEachOther = [];
+    linesToBeGrouped.forEach(line => {
+        if (currentLinesNextToEachOther.length === 0 ||
+            line.lineNumber -
+                currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
+                    .lineNumber <=
+                lineSeparationThreshold) {
+            currentLinesNextToEachOther.push(line);
+        }
+        else {
             linesNextToEachOther.push(currentLinesNextToEachOther);
+            currentLinesNextToEachOther = [line];
         }
     });
-    linesNextToEachOther.sort((a, b) => {
+    if (currentLinesNextToEachOther.length > 0) {
+        linesNextToEachOther.push(currentLinesNextToEachOther);
+    }
+    return linesNextToEachOther;
+}
+exports.groupLinesNextToEachOther = groupLinesNextToEachOther;
+function sortedGroupedLinesBySflRankingOrder(groupedLines, sflRankingOrder) {
+    return groupedLines.sort((a, b) => {
         const maxA = a
             .map(line => {
             const suspiciousnessValue = line.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
@@ -16399,6 +16386,32 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
             .reduce((a, b) => Math.max(a, b));
         return maxB - maxA;
     });
+}
+exports.sortedGroupedLinesBySflRankingOrder = sortedGroupedLinesBySflRankingOrder;
+function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder) {
+    let bodyToReturn = '';
+    sflRanking.sort((a, b) => {
+        if (a === sflRankingOrder) {
+            return -1;
+        }
+        if (b === sflRankingOrder) {
+            return 1;
+        }
+        return 0;
+    });
+    const linesByMethod = [];
+    let linesNextToEachOther = [];
+    const uniqueMethods = [...new Set(lines.map(line => line.method))];
+    uniqueMethods.forEach(method => {
+        linesByMethod.push(lines.filter(line => line.method === method));
+    });
+    linesByMethod.forEach(linesOfMethod => {
+        linesNextToEachOther = [
+            ...linesNextToEachOther,
+            ...groupLinesNextToEachOther(linesOfMethod)
+        ];
+    });
+    linesNextToEachOther = sortedGroupedLinesBySflRankingOrder(linesNextToEachOther, sflRankingOrder);
     if (linesNextToEachOther.length > 0) {
         bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`;
         bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
@@ -17253,7 +17266,8 @@ const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const stateHelper = __importStar(__nccwpck_require__(9319));
 const dataProcessingHelper = __importStar(__nccwpck_require__(2209));
-async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines, testCases) {
+const dataProcessingHelper_1 = __nccwpck_require__(2209);
+async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines, testCases, diffCommentsInCodeBlock) {
     try {
         let body = '';
         const lines = [];
@@ -17294,22 +17308,33 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         body += '\n\n';
         await createCommitPRComment(authToken, { body });
         const filesOnDiff = await getFilesOnDiff(authToken);
-        lines.forEach(line => {
-            const fileOnDiff = filesOnDiff.find(file => '/' + file.path === line.method.file.path);
-            if (fileOnDiff) {
-                const changedLinesAffected = fileOnDiff.changedLines.find(changed => changed.startLine <= line.lineNumber &&
-                    changed.endLine >= line.lineNumber);
-                if (changedLinesAffected) {
-                    createCommitPRComment(authToken, {
-                        body: '<details><summary>Line Suspiciousness by Algorithm</summary>\n\n## Line Suspiciousness by Algorithm\n' +
-                            dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, true) +
-                            '</details>',
-                        path: fileOnDiff.path,
-                        position: getLinePosition(changedLinesAffected, line.lineNumber)
-                    }, true);
+        if (diffCommentsInCodeBlock) {
+            filesOnDiff.forEach(file => {
+                const linesShownOnDiffFile = lines.filter(line => '/' + file.path === line.method.file.path &&
+                    file.changedLines.some(changed => changed.startLine <= line.lineNumber &&
+                        changed.endLine >= line.lineNumber));
+                let linesNextToEachOther = (0, dataProcessingHelper_1.groupLinesNextToEachOther)(linesShownOnDiffFile);
+                linesNextToEachOther = (0, dataProcessingHelper_1.sortedGroupedLinesBySflRankingOrder)(linesNextToEachOther, sflRankingOrder);
+            });
+        }
+        else {
+            lines.forEach(line => {
+                const fileOnDiff = filesOnDiff.find(file => '/' + file.path === line.method.file.path);
+                if (fileOnDiff) {
+                    const changedLinesAffected = fileOnDiff.changedLines.find(changed => changed.startLine <= line.lineNumber &&
+                        changed.endLine >= line.lineNumber);
+                    if (changedLinesAffected) {
+                        createCommitPRComment(authToken, {
+                            body: '<details><summary>Line Suspiciousness by Algorithm</summary>\n\n## Line Suspiciousness by Algorithm\n' +
+                                dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, true) +
+                                '</details>',
+                            path: fileOnDiff.path,
+                            position: getLinePosition(changedLinesAffected, line.lineNumber)
+                        }, true);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
     catch (error) {
         throw new Error(`Encountered an error when creating Commit/PR comment based on threshold of algorithms: ${error?.message ?? error}`);
@@ -17531,6 +17556,7 @@ async function getInputs() {
     if (sflRanking.indexOf(sflRankingOrder)) {
         throw new Error('The value of `sfl-ranking-order` should be one of the elements in `sfl-ranking`.');
     }
+    const diffCommentsInCodeBlock = core.getInput('diff-comments-code-block') === 'true';
     const uploadArtifacts = core.getInput('upload-artifacts') === 'true';
     return {
         authToken: authToken,
@@ -17546,6 +17572,7 @@ async function getInputs() {
         sflRanking: sflRanking,
         sflThreshold: sflThreshold,
         sflRankingOrder: sflRankingOrder,
+        diffCommentsInCodeBlock: diffCommentsInCodeBlock,
         uploadArtifacts: uploadArtifacts
     };
 }
@@ -17599,7 +17626,7 @@ async function run() {
         core.info(`Parsing files...`);
         await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath, inputs.serializedCoverageFilePath);
         core.info(`Creating commit/PR threshold comment...`);
-        await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, inputs.sflRankingOrder, fileParser.sourceCodeLines, fileParser.testCases);
+        await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, inputs.sflRankingOrder, fileParser.sourceCodeLines, fileParser.testCases, inputs.diffCommentsInCodeBlock);
         if (inputs.uploadArtifacts) {
             core.info(`Uploading artifacts...`);
             await githubActionsHelper.uploadArtifacts('GZoltar Results', fileParser.filePaths);

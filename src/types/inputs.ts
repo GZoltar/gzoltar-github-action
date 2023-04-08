@@ -50,6 +50,11 @@ export interface IInputs {
   sflRankingOrder: string
 
   /**
+   * Comments displayed on files with suspicious lines in diff are grouped by code block, instead of in each line
+   */
+  diffCommentsInCodeBlock: boolean
+
+  /**
    * Indicates whether to upload the GZoltar results as an artifact
    */
   uploadArtifacts: boolean

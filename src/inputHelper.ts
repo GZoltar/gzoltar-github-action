@@ -92,6 +92,10 @@ export async function getInputs(): Promise<IInputs> {
     )
   }
 
+  // Diff Comments in Code Block
+  const diffCommentsInCodeBlock: boolean =
+    core.getInput('diff-comments-code-block') === 'true'
+
   // Upload Artifacts
   const uploadArtifacts: boolean = core.getInput('upload-artifacts') === 'true'
 
@@ -111,6 +115,7 @@ export async function getInputs(): Promise<IInputs> {
     sflRanking: sflRanking,
     sflThreshold: sflThreshold,
     sflRankingOrder: sflRankingOrder,
+    diffCommentsInCodeBlock: diffCommentsInCodeBlock,
     uploadArtifacts: uploadArtifacts
   }
 }

@@ -2,58 +2,42 @@ import {ISourceCodeLine} from './types/sourceCodeLine'
 import {ITestCase} from './types/testCase'
 import * as stateHelper from './stateHelper'
 
-export function getStringTableLineSuspiciousnessWithCodeBlock(
-  lines: ISourceCodeLine[],
-  sflRanking: string[],
-  sflRankingOrder: string
-): string {
-  let bodyToReturn = ''
-
-  sflRanking.sort((a, b) => {
-    if (a === sflRankingOrder) {
-      return -1
-    }
-    if (b === sflRankingOrder) {
-      return 1
-    }
-    return 0
-  })
-
-  const linesByMethod: ISourceCodeLine[][] = []
+export function groupLinesNextToEachOther(
+  linesToBeGrouped: ISourceCodeLine[],
+  lineSeparationThreshold?: number
+): ISourceCodeLine[][] {
   const linesNextToEachOther: ISourceCodeLine[][] = []
-  const lineSeparationThreshold = 5
 
-  // group lines by method
-  const uniqueMethods = [...new Set(lines.map(line => line.method))]
-  uniqueMethods.forEach(method => {
-    linesByMethod.push(lines.filter(line => line.method === method))
-  })
+  lineSeparationThreshold = lineSeparationThreshold || 5
 
-  // group lines that are next to each other
-  linesByMethod.forEach(linesOfMethod => {
-    linesOfMethod.sort((a, b) => a.lineNumber - b.lineNumber)
-    let currentLinesNextToEachOther: ISourceCodeLine[] = []
-    linesOfMethod.forEach(line => {
-      if (
-        currentLinesNextToEachOther.length === 0 ||
-        line.lineNumber -
-          currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
-            .lineNumber <=
-          lineSeparationThreshold
-      ) {
-        currentLinesNextToEachOther.push(line)
-      } else {
-        linesNextToEachOther.push(currentLinesNextToEachOther)
-        currentLinesNextToEachOther = [line]
-      }
-    })
-    if (currentLinesNextToEachOther.length > 0) {
+  linesToBeGrouped.sort((a, b) => a.lineNumber - b.lineNumber)
+  let currentLinesNextToEachOther: ISourceCodeLine[] = []
+  linesToBeGrouped.forEach(line => {
+    if (
+      currentLinesNextToEachOther.length === 0 ||
+      line.lineNumber -
+        currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
+          .lineNumber <=
+        lineSeparationThreshold!
+    ) {
+      currentLinesNextToEachOther.push(line)
+    } else {
       linesNextToEachOther.push(currentLinesNextToEachOther)
+      currentLinesNextToEachOther = [line]
     }
   })
+  if (currentLinesNextToEachOther.length > 0) {
+    linesNextToEachOther.push(currentLinesNextToEachOther)
+  }
 
-  // sort grouped lines by max suspiciousness based on sflRankingOrder
-  linesNextToEachOther.sort((a, b) => {
+  return linesNextToEachOther
+}
+
+export function sortedGroupedLinesBySflRankingOrder(
+  groupedLines: ISourceCodeLine[][],
+  sflRankingOrder: string
+) {
+  return groupedLines.sort((a, b) => {
     const maxA = a
       .map(line => {
         const suspiciousnessValue = line.suspiciousnessMetrics.find(
@@ -82,6 +66,47 @@ export function getStringTableLineSuspiciousnessWithCodeBlock(
       .reduce((a, b) => Math.max(a, b))
     return maxB - maxA
   })
+}
+
+export function getStringTableLineSuspiciousnessWithCodeBlock(
+  lines: ISourceCodeLine[],
+  sflRanking: string[],
+  sflRankingOrder: string
+): string {
+  let bodyToReturn = ''
+
+  sflRanking.sort((a, b) => {
+    if (a === sflRankingOrder) {
+      return -1
+    }
+    if (b === sflRankingOrder) {
+      return 1
+    }
+    return 0
+  })
+
+  const linesByMethod: ISourceCodeLine[][] = []
+  let linesNextToEachOther: ISourceCodeLine[][] = []
+
+  // group lines by method
+  const uniqueMethods = [...new Set(lines.map(line => line.method))]
+  uniqueMethods.forEach(method => {
+    linesByMethod.push(lines.filter(line => line.method === method))
+  })
+
+  // group lines that are next to each other
+  linesByMethod.forEach(linesOfMethod => {
+    linesNextToEachOther = [
+      ...linesNextToEachOther,
+      ...groupLinesNextToEachOther(linesOfMethod)
+    ]
+  })
+
+  // sort grouped lines by max suspiciousness based on sflRankingOrder
+  linesNextToEachOther = sortedGroupedLinesBySflRankingOrder(
+    linesNextToEachOther,
+    sflRankingOrder
+  )
 
   if (linesNextToEachOther.length > 0) {
     // Add a header for the table

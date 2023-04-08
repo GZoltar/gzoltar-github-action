@@ -8,6 +8,10 @@ import {ISourceCodeLine} from './types/sourceCodeLine'
 import {ITestCase} from './types/testCase'
 import {IFileOnDiff} from './types/fileOnDiff'
 import {IDiffChangedLines} from './types/diffChangedLines'
+import {
+  groupLinesNextToEachOther,
+  sortedGroupedLinesBySflRankingOrder
+} from './dataProcessingHelper'
 
 export async function createCommitPRCommentLineSuspiciousnessThreshold(
   authToken: string,
@@ -15,7 +19,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
   sflThreshold: number[],
   sflRankingOrder: string,
   parsedLines: ISourceCodeLine[],
-  testCases: ITestCase[]
+  testCases: ITestCase[],
+  diffCommentsInCodeBlock: boolean
 ) {
   try {
     let body = ''
@@ -87,43 +92,68 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     await createCommitPRComment(authToken, {body})
 
     // Create comment on diff of commit
-
     const filesOnDiff: IFileOnDiff[] = await getFilesOnDiff(authToken)
 
-    lines.forEach(line => {
-      const fileOnDiff = filesOnDiff.find(
-        file => '/' + file.path === line.method.file.path
-      )
+    if (diffCommentsInCodeBlock) {
+      filesOnDiff.forEach(file => {
+        const linesShownOnDiffFile = lines.filter(
+          line =>
+            '/' + file.path === line.method.file.path &&
+            file.changedLines.some(
+              changed =>
+                changed.startLine <= line.lineNumber &&
+                changed.endLine >= line.lineNumber
+            )
+        )
 
-      if (fileOnDiff) {
-        const changedLinesAffected: IDiffChangedLines | undefined =
-          fileOnDiff.changedLines.find(
-            changed =>
-              changed.startLine <= line.lineNumber &&
-              changed.endLine >= line.lineNumber
-          )
+        // group lines that are next to each other
+        let linesNextToEachOther =
+          groupLinesNextToEachOther(linesShownOnDiffFile)
 
-        if (changedLinesAffected) {
-          createCommitPRComment(
-            authToken,
-            {
-              body:
-                '<details><summary>Line Suspiciousness by Algorithm</summary>\n\n## Line Suspiciousness by Algorithm\n' +
-                dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(
-                  line,
-                  sflRanking,
-                  testCases,
-                  true
-                ) +
-                '</details>',
-              path: fileOnDiff.path,
-              position: getLinePosition(changedLinesAffected, line.lineNumber)
-            },
-            true
-          )
+        // sort grouped lines by max suspiciousness based on sflRankingOrder
+        linesNextToEachOther = sortedGroupedLinesBySflRankingOrder(
+          linesNextToEachOther,
+          sflRankingOrder
+        )
+      })
+
+      //TODO: Create table without link to lines
+    } else {
+      lines.forEach(line => {
+        const fileOnDiff = filesOnDiff.find(
+          file => '/' + file.path === line.method.file.path
+        )
+
+        if (fileOnDiff) {
+          const changedLinesAffected: IDiffChangedLines | undefined =
+            fileOnDiff.changedLines.find(
+              changed =>
+                changed.startLine <= line.lineNumber &&
+                changed.endLine >= line.lineNumber
+            )
+
+          if (changedLinesAffected) {
+            createCommitPRComment(
+              authToken,
+              {
+                body:
+                  '<details><summary>Line Suspiciousness by Algorithm</summary>\n\n## Line Suspiciousness by Algorithm\n' +
+                  dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(
+                    line,
+                    sflRanking,
+                    testCases,
+                    true
+                  ) +
+                  '</details>',
+                path: fileOnDiff.path,
+                position: getLinePosition(changedLinesAffected, line.lineNumber)
+              },
+              true
+            )
+          }
         }
-      }
-    })
+      })
+    }
   } catch (error) {
     throw new Error(
       `Encountered an error when creating Commit/PR comment based on threshold of algorithms: ${
