@@ -7,6 +7,7 @@ import * as dataProcessingHelper from './dataProcessingHelper'
 import {ISourceCodeLine} from './types/sourceCodeLine'
 import {ITestCase} from './types/testCase'
 import {IFileOnDiff} from './types/fileOnDiff'
+import {IDiffChangedLines} from './types/diffChangedLines'
 
 export async function createCommitPRCommentLineSuspiciousnessThreshold(
   authToken: string,
@@ -95,16 +96,12 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       )
 
       if (fileOnDiff) {
-        const changedLinesAffected:
-          | {
-              startLine: number
-              endLine: number
-            }
-          | undefined = fileOnDiff.changedLines.find(
-          changed =>
-            changed.startLine <= line.lineNumber &&
-            changed.endLine >= line.lineNumber
-        )
+        const changedLinesAffected: IDiffChangedLines | undefined =
+          fileOnDiff.changedLines.find(
+            changed =>
+              changed.startLine <= line.lineNumber &&
+              changed.endLine >= line.lineNumber
+          )
 
         if (changedLinesAffected) {
           createCommitPRComment(
@@ -120,7 +117,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
                 ) +
                 '</details>',
               path: fileOnDiff.path,
-              position: line.lineNumber - changedLinesAffected.startLine + 1
+              position: getLinePosition(changedLinesAffected, line.lineNumber)
             },
             true
           )
@@ -136,9 +133,26 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
   }
 }
 
+function getLinePosition(
+  changedLinesAffected: IDiffChangedLines,
+  lineNumber: number
+): number {
+  const numberOfDoublePosition =
+    changedLinesAffected.linesWithDoublePosition.filter(
+      line => line <= lineNumber
+    ).length
+
+  return (
+    lineNumber -
+    changedLinesAffected.startLine +
+    changedLinesAffected.startDiffPosition +
+    numberOfDoublePosition
+  )
+}
+
 async function createCommitPRComment(
   authToken: string,
-  inputs: {body: string; path?: string; position?: number; line?: number},
+  inputs: {body: string; path?: string; position?: number},
   forceCommentOnCommit?: boolean
 ) {
   try {
@@ -159,8 +173,7 @@ async function createCommitPRComment(
         commit_sha: stateHelper.currentCommitSha,
         body: inputs.body,
         path: inputs.path,
-        position: inputs.position,
-        line: inputs.line
+        position: inputs.position
       })
     }
   } catch (error) {
@@ -212,31 +225,47 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
     const filesOnDiff: IFileOnDiff[] = []
 
     files.forEach(file => {
-      const changedLines: {startLine: number; endLine: number}[] = []
-
+      const changedLines: IDiffChangedLines[] = []
       if (file.patch) {
-        let nextIndex = 0
-        let firstIndex = 0
-        while (nextIndex !== -1 && firstIndex !== -1) {
-          firstIndex = file.patch.indexOf(
-            '@@',
-            nextIndex == 0 ? nextIndex : nextIndex + 1
-          )
-          if (firstIndex !== -1) {
-            nextIndex = file.patch.indexOf('@@', firstIndex + 1)
-            if (nextIndex !== -1) {
-              const line = file.patch.substring(firstIndex, nextIndex)
-              const lineSplitted = line.split(' ')
-              const lineSplitted2 = lineSplitted[2].split(',')
-              const startLine = parseInt(lineSplitted2[0].substring(1))
-              const sizeOfCodeBlock = parseInt(lineSplitted2[1])
-              changedLines.push({
-                startLine: startLine,
-                endLine: startLine + sizeOfCodeBlock - 1
-              })
+        const patchLines = file.patch.split('\n')
+        let lastDiffPosition = 0
+        let currentSection: IDiffChangedLines | null = null
+
+        patchLines.forEach((line, index) => {
+          if (line.startsWith('@@')) {
+            if (currentSection) {
+              changedLines.push(currentSection)
+            }
+            const lineSplitted = line.split(' ')
+            const lineSplitted2 = lineSplitted[2].split(',')
+            const startLine = parseInt(lineSplitted2[0].substring(1))
+            const sizeOfCodeBlock = parseInt(lineSplitted2[1])
+            const endLine = startLine + sizeOfCodeBlock - 1
+
+            currentSection = {
+              startLine: startLine,
+              endLine: endLine,
+              startDiffPosition: lastDiffPosition + 1,
+              linesWithDoublePosition: []
+            }
+          } else {
+            lastDiffPosition++
+
+            if (line.startsWith('+') || line.startsWith('-')) {
+              if (
+                (line.startsWith('+') &&
+                  patchLines[index - 1]?.startsWith('-')) ||
+                (line.startsWith('-') && patchLines[index - 1]?.startsWith('+'))
+              ) {
+                currentSection!.linesWithDoublePosition.push(
+                  lastDiffPosition -
+                    currentSection!.startDiffPosition +
+                    currentSection!.startLine
+                )
+              }
             }
           }
-        }
+        })
       }
 
       filesOnDiff.push({path: file.filename, changedLines: changedLines})
