@@ -37,18 +37,18 @@ function getBaseCommitSha(): string | undefined {
   }
 }
 
-export const baseCommitSha = getBaseCommitSha()
+export const baseCommitSha = '123'
 
-export const currentCommitSha = getCurrentCommitSha()
+export const currentCommitSha = '123'
 
-export const isInPullRequest = github.context.eventName == 'pull_request'
+export const isInPullRequest = true
 
-export const isInPush = github.context.eventName == 'push'
+export const isInPush = false
 
 // Issues and PRs are the same for the GitHub API
-export const pullRequestNumber = github.context.issue.number
+export const pullRequestNumber = 1
 
-export const currentSha = github.context.sha
+export const currentSha = '123'
 
 /**
  * It returns the root directory of the repository
@@ -62,8 +62,8 @@ function getRootDirectory(): string {
   return rootDirectory
 }
 
-export const rootDirectory = getRootDirectory()
+export const rootDirectory = '.'
 
-export const repoOwner = github.context.repo.owner
+export const repoOwner = 'hugofpaiva'
 
-export const repoName = github.context.repo.repo
+export const repoName = 'gzoltar-action'

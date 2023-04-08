@@ -54,6 +54,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       return bSuspiciousnessValue - aSuspiciousnessValue
     })
 
+    /*
+
     // Create comment on commit/PR
     if (lines.length === 0) {
       body += "✅ **GZoltar didn't find any possible bug in your code** 🙌"
@@ -84,6 +86,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     body += '\n\n'
 
     await createCommitPRComment(authToken, {body})
+
+    */
 
     // Create comment on diff of commit
 
