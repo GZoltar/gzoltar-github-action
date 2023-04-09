@@ -8,10 +8,6 @@ import {ISourceCodeLine} from './types/sourceCodeLine'
 import {ITestCase} from './types/testCase'
 import {IFileOnDiff} from './types/fileOnDiff'
 import {IDiffChangedLines} from './types/diffChangedLines'
-import {
-  groupLinesNextToEachOther,
-  sortedGroupedLinesBySflRankingOrder
-} from './dataProcessingHelper'
 
 export async function createCommitPRCommentLineSuspiciousnessThreshold(
   authToken: string,
@@ -79,7 +75,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       body +=
         '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n'
       body +=
-        dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlock(
+        dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(
           lines,
           sflRanking,
           sflRankingOrder
@@ -108,16 +104,41 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
 
         // group lines that are next to each other
         let linesNextToEachOther =
-          groupLinesNextToEachOther(linesShownOnDiffFile)
+          dataProcessingHelper.groupLinesNextToEachOther(linesShownOnDiffFile)
 
         // sort grouped lines by max suspiciousness based on sflRankingOrder
-        linesNextToEachOther = sortedGroupedLinesBySflRankingOrder(
-          linesNextToEachOther,
-          sflRankingOrder
-        )
-      })
+        linesNextToEachOther =
+          dataProcessingHelper.sortedGroupedLinesBySflRankingOrder(
+            linesNextToEachOther,
+            sflRankingOrder
+          )
 
-      //TODO: Create table without link to lines
+        linesNextToEachOther.forEach((groupOfLines, index) => {
+          createCommitPRComment(
+            authToken,
+            {
+              body:
+                '<details><summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n## Lines Code Block Suspiciousness by Algorithm\n' +
+                dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(
+                  groupOfLines,
+                  sflRanking,
+                  true
+                ) +
+                '</details>',
+              path: file.path,
+              position: getLinePosition(
+                file.changedLines.find(
+                  changed =>
+                    changed.startLine <= groupOfLines[0].lineNumber &&
+                    changed.endLine >= groupOfLines[0].lineNumber
+                )!,
+                Math.max(...groupOfLines.map(line => line.lineNumber))
+              )
+            },
+            true
+          )
+        })
+      })
     } else {
       lines.forEach(line => {
         const fileOnDiff = filesOnDiff.find(

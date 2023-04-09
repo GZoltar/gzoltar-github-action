@@ -16338,7 +16338,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessForSingleLine = exports.getStringTableLineSuspiciousnessWithCodeBlock = exports.sortedGroupedLinesBySflRankingOrder = exports.groupLinesNextToEachOther = void 0;
+exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessForSingleLine = exports.getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines = exports.getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther = exports.sortedGroupedLinesBySflRankingOrder = exports.groupLinesNextToEachOther = void 0;
 const stateHelper = __importStar(__nccwpck_require__(9319));
 function groupLinesNextToEachOther(linesToBeGrouped, lineSeparationThreshold) {
     const linesNextToEachOther = [];
@@ -16388,7 +16388,67 @@ function sortedGroupedLinesBySflRankingOrder(groupedLines, sflRankingOrder) {
     });
 }
 exports.sortedGroupedLinesBySflRankingOrder = sortedGroupedLinesBySflRankingOrder;
-function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder) {
+function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(linesNextToEachOther, sflRanking, standAloneTableWithoutLineLocation) {
+    standAloneTableWithoutLineLocation =
+        standAloneTableWithoutLineLocation || false;
+    let bodyToReturn = '';
+    if (standAloneTableWithoutLineLocation) {
+        bodyToReturn += `| ⬇ ${sflRanking.join(' | ')}|\n`;
+        for (let i = 0; i < sflRanking.length; i++) {
+            bodyToReturn += '|:---:';
+        }
+        bodyToReturn += '|\n';
+    }
+    const lineLocation = (linesNextToEachOther[0].method.file.path
+        ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${linesNextToEachOther[0].method.file.path}`
+        : `${linesNextToEachOther[0].method.file.name}$${linesNextToEachOther[0].method.name}`) +
+        `#L${linesNextToEachOther[0].lineNumber}${linesNextToEachOther.length > 1
+            ? `-L${linesNextToEachOther[linesNextToEachOther.length - 1].lineNumber}`
+            : ''}`;
+    const suspiciousnesses = sflRanking
+        .map(algorithm => {
+        return linesNextToEachOther.map((line, index) => {
+            let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
+                .find(obj => obj.algorithm === algorithm)
+                ?.suspiciousnessValue.toFixed(2);
+            let returnSuspiciousnessForThisLineAndAlgorithm = '';
+            if (index != 0 &&
+                line.lineNumber > linesNextToEachOther[index - 1].lineNumber + 1) {
+                let previousLineNumber = linesNextToEachOther[index - 1].lineNumber;
+                while (previousLineNumber < line.lineNumber - 1) {
+                    returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
+                    previousLineNumber++;
+                }
+            }
+            if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
+                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
+            }
+            else {
+                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
+            }
+            return returnSuspiciousnessForThisLineAndAlgorithm;
+        });
+    })
+        .map(suspiciousnesses => {
+        let suspiciousnessesString = '';
+        suspiciousnesses.forEach((suspiciousness, index) => {
+            if (index != 0) {
+                suspiciousnessesString += '<br>';
+            }
+            if (suspiciousness === undefined) {
+                suspiciousnessesString += '---';
+            }
+            else {
+                suspiciousnessesString += suspiciousness;
+            }
+        });
+        return suspiciousnessesString;
+    });
+    bodyToReturn += `${standAloneTableWithoutLineLocation ? '' : '|' + lineLocation}| ${suspiciousnesses.join(' | ')}|\n`;
+    return bodyToReturn;
+}
+exports.getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther = getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther;
+function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(lines, sflRanking, sflRankingOrder) {
     let bodyToReturn = '';
     sflRanking.sort((a, b) => {
         if (a === sflRankingOrder) {
@@ -16421,55 +16481,13 @@ function getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRan
         }
         bodyToReturn += '\n';
         linesNextToEachOther.forEach(lines => {
-            const lineLocation = (lines[0].method.file.path
-                ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
-                : `${lines[0].method.file.name}$${lines[0].method.name}`) +
-                `#L${lines[0].lineNumber}${lines.length > 1 ? `-L${lines[lines.length - 1].lineNumber}` : ''}`;
-            const suspiciousnesses = sflRanking
-                .map(algorithm => {
-                return lines.map((line, index) => {
-                    let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
-                        .find(obj => obj.algorithm === algorithm)
-                        ?.suspiciousnessValue.toFixed(2);
-                    let returnSuspiciousnessForThisLineAndAlgorithm = '';
-                    if (index != 0 &&
-                        line.lineNumber > lines[index - 1].lineNumber + 1) {
-                        let previousLineNumber = lines[index - 1].lineNumber;
-                        while (previousLineNumber < line.lineNumber - 1) {
-                            returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
-                            previousLineNumber++;
-                        }
-                    }
-                    if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
-                    }
-                    else {
-                        returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
-                    }
-                    return returnSuspiciousnessForThisLineAndAlgorithm;
-                });
-            })
-                .map(suspiciousnesses => {
-                let suspiciousnessesString = '';
-                suspiciousnesses.forEach((suspiciousness, index) => {
-                    if (index != 0) {
-                        suspiciousnessesString += '<br>';
-                    }
-                    if (suspiciousness === undefined) {
-                        suspiciousnessesString += '---';
-                    }
-                    else {
-                        suspiciousnessesString += suspiciousness;
-                    }
-                });
-                return suspiciousnessesString;
-            });
-            bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}|\n`;
+            bodyToReturn +=
+                getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(lines, sflRanking);
         });
     }
     return bodyToReturn;
 }
-exports.getStringTableLineSuspiciousnessWithCodeBlock = getStringTableLineSuspiciousnessWithCodeBlock;
+exports.getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines = getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines;
 function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, standAloneTableWithoutLineLocation) {
     standAloneTableWithoutLineLocation =
         standAloneTableWithoutLineLocation || false;
@@ -17266,7 +17284,6 @@ const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const stateHelper = __importStar(__nccwpck_require__(9319));
 const dataProcessingHelper = __importStar(__nccwpck_require__(2209));
-const dataProcessingHelper_1 = __nccwpck_require__(2209);
 async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines, testCases, diffCommentsInCodeBlock) {
     try {
         let body = '';
@@ -17302,7 +17319,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             body +=
                 '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n';
             body +=
-                dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlock(lines, sflRanking, sflRankingOrder);
+                dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(lines, sflRanking, sflRankingOrder);
             body += '</details>\n';
         }
         body += '\n\n';
@@ -17313,8 +17330,19 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 const linesShownOnDiffFile = lines.filter(line => '/' + file.path === line.method.file.path &&
                     file.changedLines.some(changed => changed.startLine <= line.lineNumber &&
                         changed.endLine >= line.lineNumber));
-                let linesNextToEachOther = (0, dataProcessingHelper_1.groupLinesNextToEachOther)(linesShownOnDiffFile);
-                linesNextToEachOther = (0, dataProcessingHelper_1.sortedGroupedLinesBySflRankingOrder)(linesNextToEachOther, sflRankingOrder);
+                let linesNextToEachOther = dataProcessingHelper.groupLinesNextToEachOther(linesShownOnDiffFile);
+                linesNextToEachOther =
+                    dataProcessingHelper.sortedGroupedLinesBySflRankingOrder(linesNextToEachOther, sflRankingOrder);
+                linesNextToEachOther.forEach((groupOfLines, index) => {
+                    createCommitPRComment(authToken, {
+                        body: '<details><summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n## Lines Code Block Suspiciousness by Algorithm\n' +
+                            dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(groupOfLines, sflRanking, true) +
+                            '</details>',
+                        path: file.path,
+                        position: getLinePosition(file.changedLines.find(changed => changed.startLine <= groupOfLines[0].lineNumber &&
+                            changed.endLine >= groupOfLines[0].lineNumber), Math.max(...groupOfLines.map(line => line.lineNumber)))
+                    }, true);
+                });
             });
         }
         else {

@@ -68,7 +68,96 @@ export function sortedGroupedLinesBySflRankingOrder(
   })
 }
 
-export function getStringTableLineSuspiciousnessWithCodeBlock(
+export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(
+  linesNextToEachOther: ISourceCodeLine[],
+  sflRanking: string[],
+  standAloneTableWithoutLineLocation?: boolean
+) {
+  standAloneTableWithoutLineLocation =
+    standAloneTableWithoutLineLocation || false
+
+  let bodyToReturn = ''
+
+  if (standAloneTableWithoutLineLocation) {
+    // Add a row for the algorithm names
+    bodyToReturn += `| ⬇ ${sflRanking.join(' | ')}|\n`
+
+    // Add a separator row for the table
+    for (let i = 0; i < sflRanking.length; i++) {
+      bodyToReturn += '|:---:'
+    }
+    bodyToReturn += '|\n'
+  }
+
+  const lineLocation =
+    (linesNextToEachOther[0].method.file.path
+      ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${linesNextToEachOther[0].method.file.path}`
+      : `${linesNextToEachOther[0].method.file.name}$${linesNextToEachOther[0].method.name}`) +
+    `#L${linesNextToEachOther[0].lineNumber}${
+      linesNextToEachOther.length > 1
+        ? `-L${
+            linesNextToEachOther[linesNextToEachOther.length - 1].lineNumber
+          }`
+        : ''
+    }`
+
+  // Get the suspiciousness values for each algorithm and line in the group
+  const suspiciousnesses: string[] = sflRanking
+    .map(algorithm => {
+      return linesNextToEachOther.map((line, index) => {
+        let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
+          .find(obj => obj.algorithm === algorithm)
+          ?.suspiciousnessValue.toFixed(2)
+        let returnSuspiciousnessForThisLineAndAlgorithm = ''
+        if (
+          index != 0 &&
+          line.lineNumber > linesNextToEachOther[index - 1].lineNumber + 1
+        ) {
+          let previousLineNumber = linesNextToEachOther[index - 1].lineNumber
+          while (previousLineNumber < line.lineNumber - 1) {
+            returnSuspiciousnessForThisLineAndAlgorithm += `**L${
+              previousLineNumber + 1
+            } 𑗅** -------<br>`
+            previousLineNumber++
+          }
+        }
+
+        if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
+          returnSuspiciousnessForThisLineAndAlgorithm += `**L${
+            line.lineNumber
+          } 𑗅** ${getColoredSuspiciousness(
+            suspiciousnessForThisLineAndAlgorithm
+          )}`
+        } else {
+          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`
+        }
+        return returnSuspiciousnessForThisLineAndAlgorithm
+      })
+    }) // Convert the suspiciousness values to a string
+    .map(suspiciousnesses => {
+      let suspiciousnessesString = ''
+      suspiciousnesses.forEach((suspiciousness, index) => {
+        if (index != 0) {
+          suspiciousnessesString += '<br>'
+        }
+        if (suspiciousness === undefined) {
+          suspiciousnessesString += '---'
+        } else {
+          suspiciousnessesString += suspiciousness
+        }
+      })
+      return suspiciousnessesString
+    })
+
+  // Add a row for the group of lines and their suspiciousness values
+  bodyToReturn += `${
+    standAloneTableWithoutLineLocation ? '' : '|' + lineLocation
+  }| ${suspiciousnesses.join(' | ')}|\n`
+
+  return bodyToReturn
+}
+
+export function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(
   lines: ISourceCodeLine[],
   sflRanking: string[],
   sflRankingOrder: string
@@ -124,68 +213,13 @@ export function getStringTableLineSuspiciousnessWithCodeBlock(
 
     // Iterate over each group of lines
     linesNextToEachOther.forEach(lines => {
-      const lineLocation =
-        (lines[0].method.file.path
-          ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${lines[0].method.file.path}`
-          : `${lines[0].method.file.name}$${lines[0].method.name}`) +
-        `#L${lines[0].lineNumber}${
-          lines.length > 1 ? `-L${lines[lines.length - 1].lineNumber}` : ''
-        }`
-
-      // Get the suspiciousness values for each algorithm and line in the group
-      const suspiciousnesses: string[] = sflRanking
-        .map(algorithm => {
-          return lines.map((line, index) => {
-            let suspiciousnessForThisLineAndAlgorithm =
-              line.suspiciousnessMetrics
-                .find(obj => obj.algorithm === algorithm)
-                ?.suspiciousnessValue.toFixed(2)
-            let returnSuspiciousnessForThisLineAndAlgorithm = ''
-            if (
-              index != 0 &&
-              line.lineNumber > lines[index - 1].lineNumber + 1
-            ) {
-              let previousLineNumber = lines[index - 1].lineNumber
-              while (previousLineNumber < line.lineNumber - 1) {
-                returnSuspiciousnessForThisLineAndAlgorithm += `**L${
-                  previousLineNumber + 1
-                } 𑗅** -------<br>`
-                previousLineNumber++
-              }
-            }
-
-            if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-              returnSuspiciousnessForThisLineAndAlgorithm += `**L${
-                line.lineNumber
-              } 𑗅** ${getColoredSuspiciousness(
-                suspiciousnessForThisLineAndAlgorithm
-              )}`
-            } else {
-              returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`
-            }
-            return returnSuspiciousnessForThisLineAndAlgorithm
-          })
-        }) // Convert the suspiciousness values to a string
-        .map(suspiciousnesses => {
-          let suspiciousnessesString = ''
-          suspiciousnesses.forEach((suspiciousness, index) => {
-            if (index != 0) {
-              suspiciousnessesString += '<br>'
-            }
-            if (suspiciousness === undefined) {
-              suspiciousnessesString += '---'
-            } else {
-              suspiciousnessesString += suspiciousness
-            }
-          })
-          return suspiciousnessesString
-        })
-
-      // Add a row for the group of lines and their suspiciousness values
-      bodyToReturn += `|${lineLocation}| ${suspiciousnesses.join(' | ')}|\n`
+      bodyToReturn +=
+        getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(
+          lines,
+          sflRanking
+        )
     })
   }
-
   return bodyToReturn
 }
 
