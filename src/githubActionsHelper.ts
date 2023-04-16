@@ -318,6 +318,10 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
             }
           }
         })
+
+        if (currentSection) {
+          changedLines.push(currentSection)
+        }
       }
 
       filesOnDiff.push({path: file.filename, changedLines: changedLines})

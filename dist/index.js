@@ -17466,6 +17466,9 @@ async function getFilesOnDiff(authToken) {
                         }
                     }
                 });
+                if (currentSection) {
+                    changedLines.push(currentSection);
+                }
             }
             filesOnDiff.push({ path: file.filename, changedLines: changedLines });
         });
