@@ -320,6 +320,8 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
         })
       }
 
+      core.debug("Changed lines: " + JSON.stringify(changedLines))
+
       filesOnDiff.push({path: file.filename, changedLines: changedLines})
     })
 
