@@ -287,6 +287,7 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
       core.debug(`File: ${file.filename} - Patch: ${file.patch}`)
       if (file.patch) {
         const patchLines = file.patch.split('\n')
+        core.debug(`Patch lines: ${patchLines}`)
         let lastDiffPosition = 0
         let currentSection: IDiffChangedLines | null = null
         patchLines.forEach((line, index) => {

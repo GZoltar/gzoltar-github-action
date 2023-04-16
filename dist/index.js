@@ -17439,6 +17439,7 @@ async function getFilesOnDiff(authToken) {
             core.debug(`File: ${file.filename} - Patch: ${file.patch}`);
             if (file.patch) {
                 const patchLines = file.patch.split('\n');
+                core.debug(`Patch lines: ${patchLines}`);
                 let lastDiffPosition = 0;
                 let currentSection = null;
                 patchLines.forEach((line, index) => {
