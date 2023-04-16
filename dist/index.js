@@ -17468,6 +17468,7 @@ async function getFilesOnDiff(authToken) {
                     }
                 });
             }
+            core.debug("Changed lines: " + JSON.stringify(changedLines));
             filesOnDiff.push({ path: file.filename, changedLines: changedLines });
         });
         return filesOnDiff;
