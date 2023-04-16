@@ -189,7 +189,7 @@ function getLinePosition(
   lineNumber: number
 ): number {
   const numberOfDoublePosition =
-    changedLinesAffected.linesWithDoublePosition.filter(
+    changedLinesAffected.linesRemovedNotConsidered.filter(
       line => line <= lineNumber
     ).length
 
@@ -238,6 +238,13 @@ async function createCommitPRComment(
 
 async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
   try {
+    if (!stateHelper.baseCommitSha === undefined) {
+      core.error(
+        `The base commit sha is undefined. This is needed to get the diff between the base and head commits for this event.`
+      )
+      return []
+    }
+
     const octokit = getOctokit(authToken)
 
     const response = await octokit.rest.repos.compareCommits({
@@ -297,23 +304,17 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
               startLine: startLine,
               endLine: endLine,
               startDiffPosition: lastDiffPosition + 1,
-              linesWithDoublePosition: []
+              linesRemovedNotConsidered: []
             }
           } else {
             lastDiffPosition++
 
-            if (line.startsWith('+') || line.startsWith('-')) {
-              if (
-                (line.startsWith('+') &&
-                  patchLines[index - 1]?.startsWith('-')) ||
-                (line.startsWith('-') && patchLines[index - 1]?.startsWith('+'))
-              ) {
-                currentSection!.linesWithDoublePosition.push(
-                  lastDiffPosition -
-                    currentSection!.startDiffPosition +
-                    currentSection!.startLine
-                )
-              }
+            if (line.startsWith('-')) {
+              currentSection!.linesRemovedNotConsidered.push(
+                lastDiffPosition -
+                  currentSection!.startDiffPosition +
+                  currentSection!.startLine
+              )
             }
           }
         })
