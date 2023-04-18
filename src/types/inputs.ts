@@ -35,6 +35,11 @@ export interface IInputs {
   rankingFilesPaths?: string[]
 
   /**
+   * Path to each SFL ranking algorithms directory with the HTML reports. Example: `[/build/sfl/html/ochiai/]`
+   */
+  rankingHTMLDirectoriesPaths?: string[]
+
+  /**
    * List of the SFL ranking algorithms to use. (Keep in mind that each algorithm need to have present a fault localization report file in the `ranking-files-path` directory with his name, i.e. `ochiai.ranking.csv`.)
    */
   sflRanking: string[]

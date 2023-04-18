@@ -17,6 +17,7 @@ export default class FileParser {
   private _testCases: ITestCase[] = []
   private _statistics: IStatistic[] = []
   private _filesPaths: string[] = []
+  private _htmlDirectoriesPaths: string[] = []
 
   constructor() {}
 
@@ -24,6 +25,7 @@ export default class FileParser {
     buildPath: string,
     sflRanking: string[],
     rankingFilesPaths?: string[],
+    rankingHTMLDirectoriesPaths?: string[],
     testCasesFilePath?: string,
     spectraFilePath?: string,
     matrixFilePath?: string,
@@ -36,6 +38,14 @@ export default class FileParser {
       rankingFilesPaths = rankingFilesPaths.map(rankingFilePath => {
         return path.join(stateHelper.rootDirectory, rankingFilePath)
       })
+    }
+
+    if (rankingHTMLDirectoriesPaths) {
+      rankingHTMLDirectoriesPaths = rankingHTMLDirectoriesPaths.map(
+        rankingHTMLDirectoryPath => {
+          return path.join(stateHelper.rootDirectory, rankingHTMLDirectoryPath)
+        }
+      )
     }
 
     if (testCasesFilePath) {
@@ -72,6 +82,11 @@ export default class FileParser {
     await this.parseMatrix(buildPath, matrixFilePath)
     await this.parseStatistics(buildPath, statisticsFilePath)
     this.findSerializedCoverageFile(buildPath, serializedCoverageFilePath)
+    this.findRankingHtmlDirectories(
+      buildPath,
+      sflRanking,
+      rankingHTMLDirectoriesPaths
+    )
   }
 
   public get sourceCodeFiles(): ISourceCodeFile[] {
@@ -96,6 +111,10 @@ export default class FileParser {
 
   public get filePaths(): string[] {
     return this._filesPaths
+  }
+
+  public get htmlDirectoriesPaths(): string[] {
+    return this._htmlDirectoriesPaths
   }
 
   private async parseTestCases(
@@ -592,6 +611,51 @@ export default class FileParser {
         }`
       )
     }
+  }
+
+  private findRankingHtmlDirectories(
+    buildPath: string,
+    sflRanking: string[],
+    rankingHtmlDirectories?: string[]
+  ): string[] {
+    core.info(`Finding Ranking HTML Directories...`)
+    if (!buildPath) {
+      throw new Error("Arg 'buildPath' must not be empty")
+    }
+
+    if (rankingHtmlDirectories) {
+      rankingHtmlDirectories.forEach(rankingHtmlDirectory => {
+        if (!fs.directoryExists(rankingHtmlDirectory!)) {
+          core.error(
+            `Ranking HTML Directory '${rankingHtmlDirectory}' does not exist`
+          )
+        }
+      })
+    } else {
+      core.debug(`No rankingHtmlDirectories found, starting search...`)
+
+      rankingHtmlDirectories = []
+
+      sflRanking.forEach(ranking => {
+        const rankingHtmlDirectory = fs.searchDirectory(
+          buildPath,
+          ranking,
+          'html'
+        )
+        if (!rankingHtmlDirectory) {
+          core.debug(`Ranking HTML Directory for ranking ${ranking} not found`)
+        } else {
+          core.debug(
+            `Ranking HTML Directory for ranking ${ranking} found: '${rankingHtmlDirectory}'`
+          )
+          rankingHtmlDirectories!.push(rankingHtmlDirectory)
+        }
+      })
+    }
+
+    this._htmlDirectoriesPaths = rankingHtmlDirectories
+
+    return rankingHtmlDirectories
   }
 
   private findSerializedCoverageFile(

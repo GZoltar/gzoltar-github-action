@@ -42,6 +42,25 @@ export async function getInputs(): Promise<IInputs> {
     )
   }
 
+  // Ranking Files Paths
+  let rankingHTMLDirectoriesPaths: string[] | undefined = undefined
+  try {
+    const rankingHTMLDirectoriesPathsString: string = core.getInput(
+      'ranking-html-directories-paths'
+    )
+
+    if (rankingHTMLDirectoriesPathsString !== '') {
+      rankingHTMLDirectoriesPaths = rankingHTMLDirectoriesPathsString
+        .replace(/\[|\]/g, '')
+        .replace(/\s+/g, '')
+        .split(',')
+    }
+  } catch (error) {
+    throw new Error(
+      'Invalid form of input `ranking-html-directories-paths`. It should be a comma separated list of strings.'
+    )
+  }
+
   // SFL Ranking
   let sflRanking: string[] = []
   try {
@@ -83,6 +102,15 @@ export async function getInputs(): Promise<IInputs> {
     )
   }
 
+  if (
+    rankingHTMLDirectoriesPaths &&
+    sflRanking.length !== rankingHTMLDirectoriesPaths.length
+  ) {
+    throw new Error(
+      'The number of elements in `sfl-ranking` and `ranking-html-directories-paths` should be the same.'
+    )
+  }
+
   // SFL Ranking Order
   const sflRankingOrder: string = core.getInput('sfl-ranking-order')
 
@@ -112,6 +140,7 @@ export async function getInputs(): Promise<IInputs> {
     statisticsFilePath:
       statisticsFilePath === '' ? undefined : statisticsFilePath,
     rankingFilesPaths: rankingFilesPaths,
+    rankingHTMLDirectoriesPaths: rankingHTMLDirectoriesPaths,
     sflRanking: sflRanking,
     sflThreshold: sflThreshold,
     sflRankingOrder: sflRankingOrder,

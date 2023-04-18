@@ -16678,12 +16678,18 @@ class FileParser {
         this._testCases = [];
         this._statistics = [];
         this._filesPaths = [];
+        this._htmlDirectoriesPaths = [];
     }
-    async parse(buildPath, sflRanking, rankingFilesPaths, testCasesFilePath, spectraFilePath, matrixFilePath, statisticsFilePath, serializedCoverageFilePath) {
+    async parse(buildPath, sflRanking, rankingFilesPaths, rankingHTMLDirectoriesPaths, testCasesFilePath, spectraFilePath, matrixFilePath, statisticsFilePath, serializedCoverageFilePath) {
         buildPath = path.join(stateHelper.rootDirectory, buildPath);
         if (rankingFilesPaths) {
             rankingFilesPaths = rankingFilesPaths.map(rankingFilePath => {
                 return path.join(stateHelper.rootDirectory, rankingFilePath);
+            });
+        }
+        if (rankingHTMLDirectoriesPaths) {
+            rankingHTMLDirectoriesPaths = rankingHTMLDirectoriesPaths.map(rankingHTMLDirectoryPath => {
+                return path.join(stateHelper.rootDirectory, rankingHTMLDirectoryPath);
             });
         }
         if (testCasesFilePath) {
@@ -16710,6 +16716,7 @@ class FileParser {
         await this.parseMatrix(buildPath, matrixFilePath);
         await this.parseStatistics(buildPath, statisticsFilePath);
         this.findSerializedCoverageFile(buildPath, serializedCoverageFilePath);
+        this.findRankingHtmlDirectories(buildPath, sflRanking, rankingHTMLDirectoriesPaths);
     }
     get sourceCodeFiles() {
         return this._sourceCodeFiles;
@@ -16728,6 +16735,9 @@ class FileParser {
     }
     get filePaths() {
         return this._filesPaths;
+    }
+    get htmlDirectoriesPaths() {
+        return this._htmlDirectoriesPaths;
     }
     async parseTestCases(buildPath, testCasesFilePath) {
         core.info(`Parsing test cases...`);
@@ -17092,6 +17102,35 @@ class FileParser {
             throw new Error(`Encountered an error when parsing statistics file '${statisticsFilePath}': ${error?.message ?? error}`);
         }
     }
+    findRankingHtmlDirectories(buildPath, sflRanking, rankingHtmlDirectories) {
+        core.info(`Finding Ranking HTML Directories...`);
+        if (!buildPath) {
+            throw new Error("Arg 'buildPath' must not be empty");
+        }
+        if (rankingHtmlDirectories) {
+            rankingHtmlDirectories.forEach(rankingHtmlDirectory => {
+                if (!fs.directoryExists(rankingHtmlDirectory)) {
+                    core.error(`Ranking HTML Directory '${rankingHtmlDirectory}' does not exist`);
+                }
+            });
+        }
+        else {
+            core.debug(`No rankingHtmlDirectories found, starting search...`);
+            rankingHtmlDirectories = [];
+            sflRanking.forEach(ranking => {
+                const rankingHtmlDirectory = fs.searchDirectory(buildPath, ranking, 'html');
+                if (!rankingHtmlDirectory) {
+                    core.debug(`Ranking HTML Directory for ranking ${ranking} not found`);
+                }
+                else {
+                    core.debug(`Ranking HTML Directory for ranking ${ranking} found: '${rankingHtmlDirectory}'`);
+                    rankingHtmlDirectories.push(rankingHtmlDirectory);
+                }
+            });
+        }
+        this._htmlDirectoriesPaths = rankingHtmlDirectories;
+        return rankingHtmlDirectories;
+    }
     findSerializedCoverageFile(buildPath, serializedCoverageFilePath) {
         core.info(`Finding Serialized Coverage File...`);
         if (!buildPath) {
@@ -17127,7 +17166,7 @@ exports["default"] = FileParser;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fileExists = exports.directoryExists = exports.searchFile = exports.readFileAndGetLines = exports.readFileAndGetLineReader = void 0;
+exports.fileExists = exports.directoryExists = exports.searchDirectory = exports.searchFile = exports.readFileAndGetLines = exports.readFileAndGetLineReader = void 0;
 const fs = __nccwpck_require__(7147);
 const path = __nccwpck_require__(1017);
 const readline = __nccwpck_require__(4521);
@@ -17170,6 +17209,12 @@ async function readFileAndGetLines(path) {
 }
 exports.readFileAndGetLines = readFileAndGetLines;
 function searchFile(dir, fileName, classFileMode, packageName, directoryPathToExclude) {
+    if (!dir) {
+        throw new Error("Arg 'dir' must not be empty");
+    }
+    if (!fileName) {
+        throw new Error("Arg 'fileName' must not be empty");
+    }
     if (classFileMode && !packageName) {
         throw new Error('Arg mismatch. If classFileMode is true, packageName must be present');
     }
@@ -17214,19 +17259,57 @@ function searchFile(dir, fileName, classFileMode, packageName, directoryPathToEx
     }
 }
 exports.searchFile = searchFile;
+function searchDirectory(dir, directoryName, upperDirectory) {
+    if (!dir) {
+        throw new Error("Arg 'dir' must not be empty");
+    }
+    if (!directoryName) {
+        throw new Error("Arg 'directoryName' must not be empty");
+    }
+    try {
+        const files = fs.readdirSync(dir);
+        for (const file of files) {
+            const directoryPath = path.join(dir, file);
+            const directories = directoryPath.split('/');
+            if (directoryExists(directoryPath)) {
+                if (directories[directories.length - 1] === directoryName) {
+                    if (upperDirectory) {
+                        const upperDirectoryIndex = directories.indexOf(upperDirectory);
+                        if (upperDirectoryIndex !== -1 &&
+                            upperDirectoryIndex === directories.length - 2) {
+                            return directoryPath;
+                        }
+                    }
+                    else {
+                        return directoryPath;
+                    }
+                }
+                const result = searchDirectory(directoryPath, directoryName, upperDirectory);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+    }
+    catch (error) {
+        throw new Error(`Encountered an error when searching directory '${directoryName}' in directory '${dir}': ${error?.message ?? error}`);
+    }
+}
+exports.searchDirectory = searchDirectory;
 function directoryExists(path) {
     if (!path) {
         throw new Error("Arg 'path' must not be empty");
     }
     try {
-        if (fs.existsSync(path)) {
-            return true;
-        }
+        const fileStat = fs.statSync(path);
+        return fileStat.isDirectory();
     }
     catch (error) {
+        if (error?.code === 'ENOENT') {
+            return false;
+        }
         throw new Error(`Encountered an error when checking whether path '${path}' exists: ${error?.message ?? error}`);
     }
-    return false;
 }
 exports.directoryExists = directoryExists;
 function fileExists(path) {
@@ -17234,7 +17317,8 @@ function fileExists(path) {
         throw new Error("Arg 'path' must not be empty");
     }
     try {
-        fs.statSync(path);
+        const fileStat = fs.statSync(path);
+        return !fileStat.isDirectory();
     }
     catch (error) {
         if (error?.code === 'ENOENT') {
@@ -17242,7 +17326,6 @@ function fileExists(path) {
         }
         throw new Error(`Encountered an error when checking whether file '${path}' exists: ${error?.message ?? error}`);
     }
-    return true;
 }
 exports.fileExists = fileExists;
 
@@ -17554,6 +17637,19 @@ async function getInputs() {
     catch (error) {
         throw new Error('Invalid form of input `ranking-files-paths`. It should be a comma separated list of strings.');
     }
+    let rankingHTMLDirectoriesPaths = undefined;
+    try {
+        const rankingHTMLDirectoriesPathsString = core.getInput('ranking-html-directories-paths');
+        if (rankingHTMLDirectoriesPathsString !== '') {
+            rankingHTMLDirectoriesPaths = rankingHTMLDirectoriesPathsString
+                .replace(/\[|\]/g, '')
+                .replace(/\s+/g, '')
+                .split(',');
+        }
+    }
+    catch (error) {
+        throw new Error('Invalid form of input `ranking-html-directories-paths`. It should be a comma separated list of strings.');
+    }
     let sflRanking = [];
     try {
         sflRanking = core
@@ -17583,6 +17679,10 @@ async function getInputs() {
     if (rankingFilesPaths && sflRanking.length !== rankingFilesPaths.length) {
         throw new Error('The number of elements in `sfl-ranking` and `ranking-files-paths` should be the same.');
     }
+    if (rankingHTMLDirectoriesPaths &&
+        sflRanking.length !== rankingHTMLDirectoriesPaths.length) {
+        throw new Error('The number of elements in `sfl-ranking` and `ranking-html-directories-paths` should be the same.');
+    }
     const sflRankingOrder = core.getInput('sfl-ranking-order');
     if (sflRanking.indexOf(sflRankingOrder)) {
         throw new Error('The value of `sfl-ranking-order` should be one of the elements in `sfl-ranking`.');
@@ -17600,6 +17700,7 @@ async function getInputs() {
         matrixFilePath: matrixFilePath === '' ? undefined : matrixFilePath,
         statisticsFilePath: statisticsFilePath === '' ? undefined : statisticsFilePath,
         rankingFilesPaths: rankingFilesPaths,
+        rankingHTMLDirectoriesPaths: rankingHTMLDirectoriesPaths,
         sflRanking: sflRanking,
         sflThreshold: sflThreshold,
         sflRankingOrder: sflRankingOrder,
@@ -17655,7 +17756,7 @@ async function run() {
         const inputs = await inputHelper.getInputs();
         const fileParser = new fileParser_1.default();
         core.info(`Parsing files...`);
-        await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath, inputs.serializedCoverageFilePath);
+        await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.rankingHTMLDirectoriesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath, inputs.serializedCoverageFilePath);
         core.info(`Creating commit/PR threshold comment...`);
         await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, inputs.sflRankingOrder, fileParser.sourceCodeLines, fileParser.testCases, inputs.diffCommentsInCodeBlock);
         if (inputs.uploadArtifacts) {

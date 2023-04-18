@@ -55,6 +55,14 @@ export function searchFile(
   packageName?: string,
   directoryPathToExclude?: string
 ): string | undefined {
+  if (!dir) {
+    throw new Error("Arg 'dir' must not be empty")
+  }
+
+  if (!fileName) {
+    throw new Error("Arg 'fileName' must not be empty")
+  }
+
   if (classFileMode && !packageName) {
     throw new Error(
       'Arg mismatch. If classFileMode is true, packageName must be present'
@@ -110,24 +118,80 @@ export function searchFile(
   }
 }
 
+export function searchDirectory(
+  dir: string,
+  directoryName: string,
+  upperDirectory?: string
+): string | undefined {
+  if (!dir) {
+    throw new Error("Arg 'dir' must not be empty")
+  }
+
+  if (!directoryName) {
+    throw new Error("Arg 'directoryName' must not be empty")
+  }
+
+  try {
+    const files = fs.readdirSync(dir)
+    for (const file of files) {
+      const directoryPath = path.join(dir, file)
+
+      const directories = directoryPath.split('/')
+
+      if (directoryExists(directoryPath)) {
+        if (directories[directories.length - 1] === directoryName) {
+          if (upperDirectory) {
+            const upperDirectoryIndex = directories.indexOf(upperDirectory)
+            if (
+              upperDirectoryIndex !== -1 &&
+              upperDirectoryIndex === directories.length - 2
+            ) {
+              return directoryPath
+            }
+          } else {
+            return directoryPath
+          }
+        }
+
+        const result = searchDirectory(
+          directoryPath,
+          directoryName,
+          upperDirectory
+        )
+        if (result) {
+          return result
+        }
+      }
+    }
+  } catch (error) {
+    throw new Error(
+      `Encountered an error when searching directory '${directoryName}' in directory '${dir}': ${
+        (error as any)?.message ?? error
+      }`
+    )
+  }
+}
+
 export function directoryExists(path: string): boolean {
   if (!path) {
     throw new Error("Arg 'path' must not be empty")
   }
 
   try {
-    if (fs.existsSync(path)) {
-      return true
-    }
+    const fileStat = fs.statSync(path)
+
+    return fileStat.isDirectory()
   } catch (error) {
+    if ((error as any)?.code === 'ENOENT') {
+      return false
+    }
+
     throw new Error(
       `Encountered an error when checking whether path '${path}' exists: ${
         (error as any)?.message ?? error
       }`
     )
   }
-
-  return false
 }
 
 export function fileExists(path: string): boolean {
@@ -136,7 +200,9 @@ export function fileExists(path: string): boolean {
   }
 
   try {
-    fs.statSync(path)
+    const fileStat = fs.statSync(path)
+
+    return !fileStat.isDirectory()
   } catch (error) {
     if ((error as any)?.code === 'ENOENT') {
       return false
@@ -148,6 +214,4 @@ export function fileExists(path: string): boolean {
       }`
     )
   }
-
-  return true
 }

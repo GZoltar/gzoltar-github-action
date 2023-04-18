@@ -18,6 +18,7 @@ async function run(): Promise<void> {
       inputs.buildPath,
       inputs.sflRanking,
       inputs.rankingFilesPaths,
+      inputs.rankingHTMLDirectoriesPaths,
       inputs.testCasesFilePath,
       inputs.spectraFilePath,
       inputs.matrixFilePath,
