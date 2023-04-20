@@ -35,7 +35,7 @@ export interface IInputs {
   rankingFilesPaths?: string[]
 
   /**
-   * Path to each SFL ranking algorithms directory with the HTML reports. Example: `[/build/sfl/html/ochiai/]`
+   * Path to each SFL ranking algorithms directory containing the HTML reports. Example: `[/build/sfl/html/ochiai/]`
    */
   rankingHTMLDirectoriesPaths?: string[]
 

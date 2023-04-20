@@ -17166,7 +17166,7 @@ exports["default"] = FileParser;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fileExists = exports.directoryExists = exports.searchDirectory = exports.searchFile = exports.readFileAndGetLines = exports.readFileAndGetLineReader = void 0;
+exports.fileExists = exports.getFilesFromDirectory = exports.directoryExists = exports.searchDirectory = exports.searchFile = exports.readFileAndGetLines = exports.readFileAndGetLineReader = void 0;
 const fs = __nccwpck_require__(7147);
 const path = __nccwpck_require__(1017);
 const readline = __nccwpck_require__(4521);
@@ -17312,6 +17312,20 @@ function directoryExists(path) {
     }
 }
 exports.directoryExists = directoryExists;
+function getFilesFromDirectory(directoryPath) {
+    if (!directoryPath) {
+        throw new Error("Arg 'directoryPath' must not be empty");
+    }
+    try {
+        const files = fs.readdirSync(directoryPath);
+        const filesWithPath = files.map((file) => directoryPath + '/' + file);
+        return filesWithPath;
+    }
+    catch (error) {
+        throw new Error(`Encountered an error when getting files from directory '${directoryPath}': ${error?.message ?? error}`);
+    }
+}
+exports.getFilesFromDirectory = getFilesFromDirectory;
 function fileExists(path) {
     if (!path) {
         throw new Error("Arg 'path' must not be empty");
@@ -17367,6 +17381,7 @@ const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const stateHelper = __importStar(__nccwpck_require__(9319));
 const dataProcessingHelper = __importStar(__nccwpck_require__(2209));
+const fs = __importStar(__nccwpck_require__(6497));
 async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines, testCases, diffCommentsInCodeBlock) {
     try {
         let body = '';
@@ -17564,13 +17579,16 @@ async function getFilesOnDiff(authToken) {
 function getOctokit(authToken) {
     return github.getOctokit(authToken);
 }
-async function uploadArtifacts(artifactName, filesPaths) {
+async function uploadArtifacts(artifactName, filesPaths, directoriesPaths) {
     try {
         const artifactClient = artifact.create();
         const rootDirectory = stateHelper.rootDirectory;
         const options = {
             continueOnError: true
         };
+        directoriesPaths.forEach(directoryPath => {
+            filesPaths = [...filesPaths, ...fs.getFilesFromDirectory(directoryPath)];
+        });
         const uploadResult = await artifactClient.uploadArtifact(artifactName, filesPaths, rootDirectory, options);
         if (uploadResult.failedItems.length > 0) {
             core.error(`Failed to upload some artifacts: ${uploadResult.failedItems}`);
@@ -17761,7 +17779,7 @@ async function run() {
         await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, inputs.sflRankingOrder, fileParser.sourceCodeLines, fileParser.testCases, inputs.diffCommentsInCodeBlock);
         if (inputs.uploadArtifacts) {
             core.info(`Uploading artifacts...`);
-            await githubActionsHelper.uploadArtifacts('GZoltar Results', fileParser.filePaths);
+            await githubActionsHelper.uploadArtifacts('GZoltar Results', fileParser.filePaths, fileParser.htmlDirectoriesPaths);
         }
     }
     catch (error) {

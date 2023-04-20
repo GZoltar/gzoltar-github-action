@@ -4,6 +4,7 @@ import * as core from '@actions/core'
 
 import * as stateHelper from './stateHelper'
 import * as dataProcessingHelper from './dataProcessingHelper'
+import * as fs from './fsHelper'
 import {ISourceCodeLine} from './types/sourceCodeLine'
 import {ITestCase} from './types/testCase'
 import {IFileOnDiff} from './types/fileOnDiff'
@@ -343,7 +344,8 @@ function getOctokit(authToken: string) {
 
 export async function uploadArtifacts(
   artifactName: string,
-  filesPaths: string[]
+  filesPaths: string[],
+  directoriesPaths: string[]
 ) {
   try {
     const artifactClient = artifact.create()
@@ -353,6 +355,10 @@ export async function uploadArtifacts(
     const options: artifact.UploadOptions = {
       continueOnError: true
     }
+
+    directoriesPaths.forEach(directoryPath => {
+      filesPaths = [...filesPaths, ...fs.getFilesFromDirectory(directoryPath)]
+    })
 
     const uploadResult: artifact.UploadResponse =
       await artifactClient.uploadArtifact(

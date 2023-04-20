@@ -194,6 +194,27 @@ export function directoryExists(path: string): boolean {
   }
 }
 
+export function getFilesFromDirectory(directoryPath: string): string[] {
+  if (!directoryPath) {
+    throw new Error("Arg 'directoryPath' must not be empty")
+  }
+
+  try {
+    const files = fs.readdirSync(directoryPath)
+    const filesWithPath = files.map(
+      (file: string) => directoryPath + '/' + file
+    )
+
+    return filesWithPath
+  } catch (error) {
+    throw new Error(
+      `Encountered an error when getting files from directory '${directoryPath}': ${
+        (error as any)?.message ?? error
+      }`
+    )
+  }
+}
+
 export function fileExists(path: string): boolean {
   if (!path) {
     throw new Error("Arg 'path' must not be empty")

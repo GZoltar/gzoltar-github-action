@@ -41,7 +41,8 @@ async function run(): Promise<void> {
       core.info(`Uploading artifacts...`)
       await githubActionsHelper.uploadArtifacts(
         'GZoltar Results',
-        fileParser.filePaths
+        fileParser.filePaths,
+        fileParser.htmlDirectoriesPaths
       )
     }
   } catch (error) {
