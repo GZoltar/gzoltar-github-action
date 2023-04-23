@@ -117,7 +117,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
           while (previousLineNumber < line.lineNumber - 1) {
             returnSuspiciousnessForThisLineAndAlgorithm += `**L${
               previousLineNumber + 1
-            } 𑗅** -------<br>`
+            } 𑗅** ---------<br>`
             previousLineNumber++
           }
         }
@@ -129,7 +129,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
             suspiciousnessForThisLineAndAlgorithm
           )}`
         } else {
-          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`
+          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---------`
         }
         return returnSuspiciousnessForThisLineAndAlgorithm
       })
@@ -427,28 +427,28 @@ function getColoredSuspiciousness(suspiciousness: string): string {
     if (suspiciousnessValue >= 0.9) {
       //red
       color = 'aa0000'
-      colorAddFile = 'red.png'
+      colorAddFile = 'red.jpg'
     } else if (suspiciousnessValue >= 0.75) {
       //orange
       color = 'ff5f00'
-      colorAddFile = 'orange.png'
+      colorAddFile = 'orange.jpg'
     } else if (suspiciousnessValue >= 0.5) {
       //yellow
       color = 'ffaf00'
-      colorAddFile = 'yellow.png'
+      colorAddFile = 'yellow.jpg'
     } else if (suspiciousnessValue >= 0.25) {
       //lightgreen
       color = 'afff87'
-      colorAddFile = 'green.png'
+      colorAddFile = 'green.jpg'
     } else {
       //green
       color = '00aa00'
-      colorAddFile = 'green.png'
+      colorAddFile = 'green.jpg'
     }
   }
   return (
     (color != undefined && colorAddFile != undefined
-      ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/ColorADD/${colorAddFile}) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
+      ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/ColorADD/${colorAddFile}?raw=true) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
       : '') + suspiciousness
   )
 }

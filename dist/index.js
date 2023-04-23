@@ -16416,7 +16416,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
                 line.lineNumber > linesNextToEachOther[index - 1].lineNumber + 1) {
                 let previousLineNumber = linesNextToEachOther[index - 1].lineNumber;
                 while (previousLineNumber < line.lineNumber - 1) {
-                    returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
+                    returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** ---------<br>`;
                     previousLineNumber++;
                 }
             }
@@ -16424,7 +16424,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
                 returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
             }
             else {
-                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
+                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---------`;
             }
             return returnSuspiciousnessForThisLineAndAlgorithm;
         });
@@ -16616,27 +16616,27 @@ function getColoredSuspiciousness(suspiciousness) {
         const suspiciousnessValue = parseFloat(suspiciousness);
         if (suspiciousnessValue >= 0.9) {
             color = 'aa0000';
-            colorAddFile = 'red.png';
+            colorAddFile = 'red.jpg';
         }
         else if (suspiciousnessValue >= 0.75) {
             color = 'ff5f00';
-            colorAddFile = 'orange.png';
+            colorAddFile = 'orange.jpg';
         }
         else if (suspiciousnessValue >= 0.5) {
             color = 'ffaf00';
-            colorAddFile = 'yellow.png';
+            colorAddFile = 'yellow.jpg';
         }
         else if (suspiciousnessValue >= 0.25) {
             color = 'afff87';
-            colorAddFile = 'green.png';
+            colorAddFile = 'green.jpg';
         }
         else {
             color = '00aa00';
-            colorAddFile = 'green.png';
+            colorAddFile = 'green.jpg';
         }
     }
     return ((color != undefined && colorAddFile != undefined
-        ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/ColorADD/${colorAddFile}) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
+        ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/ColorADD/${colorAddFile}?raw=true) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
         : '') + suspiciousness);
 }
 
