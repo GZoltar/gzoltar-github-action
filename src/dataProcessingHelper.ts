@@ -427,28 +427,28 @@ function getColoredSuspiciousness(suspiciousness: string): string {
     if (suspiciousnessValue >= 0.9) {
       //red
       color = 'aa0000'
-      colorAddFile = 'assets/ColorADD/red.png'
+      colorAddFile = 'red.png'
     } else if (suspiciousnessValue >= 0.75) {
       //orange
       color = 'ff5f00'
-      colorAddFile = 'assets/ColorADD/orange.png'
+      colorAddFile = 'orange.png'
     } else if (suspiciousnessValue >= 0.5) {
       //yellow
       color = 'ffaf00'
-      colorAddFile = 'assets/ColorADD/yellow.png'
+      colorAddFile = 'yellow.png'
     } else if (suspiciousnessValue >= 0.25) {
       //lightgreen
       color = 'afff87'
-      colorAddFile = 'assets/ColorADD/green.png'
+      colorAddFile = 'green.png'
     } else {
       //green
       color = '00aa00'
-      colorAddFile = 'assets/ColorADD/green.png'
+      colorAddFile = 'green.png'
     }
   }
   return (
     (color != undefined && colorAddFile != undefined
-      ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/${colorAddFile}) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
+      ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/ColorADD/${colorAddFile}) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
       : '') + suspiciousness
   )
 }
