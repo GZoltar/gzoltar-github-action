@@ -17412,10 +17412,11 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             return bSuspiciousnessValue - aSuspiciousnessValue;
         });
         if (lines.length === 0) {
-            body += "✅ **GZoltar didn't find any possible bug in your code** 🙌";
+            body +=
+                '✅ **As there is no failing test, GZoltar has nothing to report** 🙌';
         }
         else {
-            body += '⚠️ **GZoltar found possible bugs** ⚠️';
+            body += '⚠️ **GZoltar localized possible bugs** ⚠️';
             body +=
                 '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';
             body += dataProcessingHelper.getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases);
