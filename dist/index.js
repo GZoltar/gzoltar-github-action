@@ -16614,19 +16614,19 @@ function getColoredSuspiciousness(suspiciousness) {
     if (suspiciousness !== '' && suspiciousness !== '---') {
         const suspiciousnessValue = parseFloat(suspiciousness);
         if (suspiciousnessValue >= 0.9) {
-            colorAddFile = 'red.jpg';
+            colorAddFile = 'red.svg';
         }
         else if (suspiciousnessValue >= 0.75) {
-            colorAddFile = 'orange.jpg';
+            colorAddFile = 'orange.svg';
         }
         else if (suspiciousnessValue >= 0.5) {
-            colorAddFile = 'yellow.jpg';
+            colorAddFile = 'yellow.svg';
         }
         else if (suspiciousnessValue >= 0.25) {
-            colorAddFile = 'green.jpg';
+            colorAddFile = 'green.svg';
         }
         else {
-            colorAddFile = 'green.jpg';
+            colorAddFile = 'green.svg';
         }
     }
     return ((colorAddFile != undefined
