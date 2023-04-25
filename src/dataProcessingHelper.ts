@@ -420,35 +420,29 @@ function substringStacktraceOnlyOnSpaces(
  * @returns The color for the suspiciousness value
  */
 function getColoredSuspiciousness(suspiciousness: string): string {
-  let color = undefined
   let colorAddFile = undefined
   if (suspiciousness !== '' && suspiciousness !== '---') {
     const suspiciousnessValue = parseFloat(suspiciousness)
     if (suspiciousnessValue >= 0.9) {
       //red
-      color = 'aa0000'
-      colorAddFile = 'red.jpg'
+      colorAddFile = 'red.svg'
     } else if (suspiciousnessValue >= 0.75) {
       //orange
-      color = 'ff5f00'
-      colorAddFile = 'orange.jpg'
+      colorAddFile = 'orange.svg'
     } else if (suspiciousnessValue >= 0.5) {
       //yellow
-      color = 'ffaf00'
-      colorAddFile = 'yellow.jpg'
+      colorAddFile = 'yellow.svg'
     } else if (suspiciousnessValue >= 0.25) {
       //lightgreen
-      color = 'afff87'
-      colorAddFile = 'green.jpg'
+      colorAddFile = 'green.svg'
     } else {
       //green
-      color = '00aa00'
-      colorAddFile = 'green.jpg'
+      colorAddFile = 'green.svg'
     }
   }
   return (
-    (color != undefined && colorAddFile != undefined
-      ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/ColorADD/${colorAddFile}?raw=true) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
+    (colorAddFile != undefined
+      ? `<img src ="https://raw.githubusercontent.com/hugofpaiva/gzoltar-feedback-action/main/src/assets/ColorADD/${colorAddFile}" width="11" height="11"> `
       : '') + suspiciousness
   )
 }

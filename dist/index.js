@@ -16610,33 +16610,27 @@ function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
     return stacktrace;
 }
 function getColoredSuspiciousness(suspiciousness) {
-    let color = undefined;
     let colorAddFile = undefined;
     if (suspiciousness !== '' && suspiciousness !== '---') {
         const suspiciousnessValue = parseFloat(suspiciousness);
         if (suspiciousnessValue >= 0.9) {
-            color = 'aa0000';
             colorAddFile = 'red.jpg';
         }
         else if (suspiciousnessValue >= 0.75) {
-            color = 'ff5f00';
             colorAddFile = 'orange.jpg';
         }
         else if (suspiciousnessValue >= 0.5) {
-            color = 'ffaf00';
             colorAddFile = 'yellow.jpg';
         }
         else if (suspiciousnessValue >= 0.25) {
-            color = 'afff87';
             colorAddFile = 'green.jpg';
         }
         else {
-            color = '00aa00';
             colorAddFile = 'green.jpg';
         }
     }
-    return ((color != undefined && colorAddFile != undefined
-        ? `![](https://github.com/hugofpaiva/gzoltar-feedback-action/blob/main/src/assets/ColorADD/${colorAddFile}?raw=true) ![](https://via.placeholder.com/10x10/${color}/000000?text=+) `
+    return ((colorAddFile != undefined
+        ? `<img src ="https://raw.githubusercontent.com/hugofpaiva/gzoltar-feedback-action/main/src/assets/ColorADD/${colorAddFile}" width="11" height="11"> `
         : '') + suspiciousness);
 }
 
