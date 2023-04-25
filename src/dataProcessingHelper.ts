@@ -117,7 +117,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
           while (previousLineNumber < line.lineNumber - 1) {
             returnSuspiciousnessForThisLineAndAlgorithm += `**L${
               previousLineNumber + 1
-            } 𑗅** ---------<br>`
+            } 𑗅** -------<br>`
             previousLineNumber++
           }
         }
@@ -129,7 +129,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
             suspiciousnessForThisLineAndAlgorithm
           )}`
         } else {
-          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---------`
+          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`
         }
         return returnSuspiciousnessForThisLineAndAlgorithm
       })

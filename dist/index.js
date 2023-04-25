@@ -16416,7 +16416,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
                 line.lineNumber > linesNextToEachOther[index - 1].lineNumber + 1) {
                 let previousLineNumber = linesNextToEachOther[index - 1].lineNumber;
                 while (previousLineNumber < line.lineNumber - 1) {
-                    returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** ---------<br>`;
+                    returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
                     previousLineNumber++;
                 }
             }
@@ -16424,7 +16424,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
                 returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
             }
             else {
-                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ---------`;
+                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
             }
             return returnSuspiciousnessForThisLineAndAlgorithm;
         });
