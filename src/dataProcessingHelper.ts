@@ -115,15 +115,21 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
         ) {
           let previousLineNumber = linesNextToEachOther[index - 1].lineNumber
           while (previousLineNumber < line.lineNumber - 1) {
-            returnSuspiciousnessForThisLineAndAlgorithm += `<br>`
+            returnSuspiciousnessForThisLineAndAlgorithm += `**L${
+              previousLineNumber + 1
+            } 𑗅** -------<br>`
             previousLineNumber++
           }
         }
 
         if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-          returnSuspiciousnessForThisLineAndAlgorithm += `${getColoredSuspiciousness(
+          returnSuspiciousnessForThisLineAndAlgorithm += `**L${
+            line.lineNumber
+          } 𑗅** ${getColoredSuspiciousness(
             suspiciousnessForThisLineAndAlgorithm
           )}`
+        } else {
+          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`
         }
 
         return returnSuspiciousnessForThisLineAndAlgorithm
