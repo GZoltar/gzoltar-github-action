@@ -140,11 +140,13 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
 
       algorithmSuspiciousnessLineArray.forEach(
         (algorithmSuspiciousnessForLine, index) => {
-          if (index == 0) {
+          if (!standAloneTableWithoutLineLocation) {
+            if (index == 0) {
+              suspiciousnessesStringForThisAlgorithm += '<br>'
+            }
+
             suspiciousnessesStringForThisAlgorithm += '<br>'
           }
-
-          suspiciousnessesStringForThisAlgorithm += '<br>'
 
           if (algorithmSuspiciousnessForLine !== undefined) {
             suspiciousnessesStringForThisAlgorithm +=
