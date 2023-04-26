@@ -16416,33 +16416,29 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
                 line.lineNumber > linesNextToEachOther[index - 1].lineNumber + 1) {
                 let previousLineNumber = linesNextToEachOther[index - 1].lineNumber;
                 while (previousLineNumber < line.lineNumber - 1) {
-                    returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
+                    returnSuspiciousnessForThisLineAndAlgorithm += `<br>`;
                     previousLineNumber++;
                 }
             }
             if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
-            }
-            else {
-                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
+                returnSuspiciousnessForThisLineAndAlgorithm += `${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
             }
             return returnSuspiciousnessForThisLineAndAlgorithm;
         });
     })
-        .map(suspiciousnesses => {
-        let suspiciousnessesString = '';
-        suspiciousnesses.forEach((suspiciousness, index) => {
-            if (index != 0) {
-                suspiciousnessesString += '<br>';
+        .map(algorithmSuspiciousnessLineArray => {
+        let suspiciousnessesStringForThisAlgorithm = '';
+        algorithmSuspiciousnessLineArray.forEach((algorithmSuspiciousnessForLine, index) => {
+            if (index == 0) {
+                suspiciousnessesStringForThisAlgorithm += '<br>';
             }
-            if (suspiciousness === undefined) {
-                suspiciousnessesString += '---';
-            }
-            else {
-                suspiciousnessesString += suspiciousness;
+            suspiciousnessesStringForThisAlgorithm += '<br>';
+            if (algorithmSuspiciousnessForLine !== undefined) {
+                suspiciousnessesStringForThisAlgorithm +=
+                    algorithmSuspiciousnessForLine;
             }
         });
-        return suspiciousnessesString;
+        return suspiciousnessesStringForThisAlgorithm;
     });
     bodyToReturn += `${standAloneTableWithoutLineLocation ? '' : '|' + lineLocation}| ${suspiciousnesses.join(' | ')}|\n`;
     return bodyToReturn;

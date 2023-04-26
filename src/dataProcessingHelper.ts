@@ -115,38 +115,38 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
         ) {
           let previousLineNumber = linesNextToEachOther[index - 1].lineNumber
           while (previousLineNumber < line.lineNumber - 1) {
-            returnSuspiciousnessForThisLineAndAlgorithm += `**L${
-              previousLineNumber + 1
-            } 𑗅** -------<br>`
+            returnSuspiciousnessForThisLineAndAlgorithm += `<br>`
             previousLineNumber++
           }
         }
 
         if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-          returnSuspiciousnessForThisLineAndAlgorithm += `**L${
-            line.lineNumber
-          } 𑗅** ${getColoredSuspiciousness(
+          returnSuspiciousnessForThisLineAndAlgorithm += `${getColoredSuspiciousness(
             suspiciousnessForThisLineAndAlgorithm
           )}`
-        } else {
-          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`
         }
+
         return returnSuspiciousnessForThisLineAndAlgorithm
       })
     }) // Convert the suspiciousness values to a string
-    .map(suspiciousnesses => {
-      let suspiciousnessesString = ''
-      suspiciousnesses.forEach((suspiciousness, index) => {
-        if (index != 0) {
-          suspiciousnessesString += '<br>'
+    .map(algorithmSuspiciousnessLineArray => {
+      let suspiciousnessesStringForThisAlgorithm = ''
+
+      algorithmSuspiciousnessLineArray.forEach(
+        (algorithmSuspiciousnessForLine, index) => {
+          if (index == 0) {
+            suspiciousnessesStringForThisAlgorithm += '<br>'
+          }
+
+          suspiciousnessesStringForThisAlgorithm += '<br>'
+
+          if (algorithmSuspiciousnessForLine !== undefined) {
+            suspiciousnessesStringForThisAlgorithm +=
+              algorithmSuspiciousnessForLine
+          }
         }
-        if (suspiciousness === undefined) {
-          suspiciousnessesString += '---'
-        } else {
-          suspiciousnessesString += suspiciousness
-        }
-      })
-      return suspiciousnessesString
+      )
+      return suspiciousnessesStringForThisAlgorithm
     })
 
   // Add a row for the group of lines and their suspiciousness values
