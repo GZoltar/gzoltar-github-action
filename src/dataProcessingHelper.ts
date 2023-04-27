@@ -142,9 +142,9 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
             if (index == 0) {
               suspiciousnessesStringForThisAlgorithm += `<br/>**${sflRanking[algIndex]}**`
             }
-
-            suspiciousnessesStringForThisAlgorithm += '<br/>'
           }
+
+          suspiciousnessesStringForThisAlgorithm += '<br/>'
 
           if (algorithmSuspiciousnessForLine !== undefined) {
             suspiciousnessesStringForThisAlgorithm +=
