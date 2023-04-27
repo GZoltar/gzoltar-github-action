@@ -4,9 +4,12 @@ import * as stateHelper from './stateHelper'
 
 export function groupLinesNextToEachOther(
   linesToBeGrouped: ISourceCodeLine[],
+  limitSizeOfLinesNextToEachOther?: boolean,
   lineSeparationThreshold?: number
 ): ISourceCodeLine[][] {
   const linesNextToEachOther: ISourceCodeLine[][] = []
+
+  limitSizeOfLinesNextToEachOther = limitSizeOfLinesNextToEachOther || false
 
   lineSeparationThreshold = lineSeparationThreshold || 5
 
@@ -15,10 +18,12 @@ export function groupLinesNextToEachOther(
   linesToBeGrouped.forEach(line => {
     if (
       currentLinesNextToEachOther.length === 0 ||
-      line.lineNumber -
+      (line.lineNumber -
         currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
           .lineNumber <=
-        lineSeparationThreshold!
+        lineSeparationThreshold! &&
+        (!limitSizeOfLinesNextToEachOther ||
+          currentLinesNextToEachOther.length <= 12))
     ) {
       currentLinesNextToEachOther.push(line)
     } else {
@@ -193,7 +198,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(
   linesByMethod.forEach(linesOfMethod => {
     linesNextToEachOther = [
       ...linesNextToEachOther,
-      ...groupLinesNextToEachOther(linesOfMethod)
+      ...groupLinesNextToEachOther(linesOfMethod, true)
     ]
   })
 

@@ -16340,17 +16340,20 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getStringTableLineSuspiciousness = exports.getStringTableLineSuspiciousnessForSingleLine = exports.getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines = exports.getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther = exports.sortedGroupedLinesBySflRankingOrder = exports.groupLinesNextToEachOther = void 0;
 const stateHelper = __importStar(__nccwpck_require__(9319));
-function groupLinesNextToEachOther(linesToBeGrouped, lineSeparationThreshold) {
+function groupLinesNextToEachOther(linesToBeGrouped, limitSizeOfLinesNextToEachOther, lineSeparationThreshold) {
     const linesNextToEachOther = [];
+    limitSizeOfLinesNextToEachOther = limitSizeOfLinesNextToEachOther || false;
     lineSeparationThreshold = lineSeparationThreshold || 5;
     linesToBeGrouped.sort((a, b) => a.lineNumber - b.lineNumber);
     let currentLinesNextToEachOther = [];
     linesToBeGrouped.forEach(line => {
         if (currentLinesNextToEachOther.length === 0 ||
-            line.lineNumber -
+            (line.lineNumber -
                 currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
                     .lineNumber <=
-                lineSeparationThreshold) {
+                lineSeparationThreshold &&
+                (!limitSizeOfLinesNextToEachOther ||
+                    currentLinesNextToEachOther.length <= 12))) {
             currentLinesNextToEachOther.push(line);
         }
         else {
@@ -16439,8 +16442,8 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
                 if (index == 0) {
                     suspiciousnessesStringForThisAlgorithm += `<br/>**${sflRanking[algIndex]}**`;
                 }
-                suspiciousnessesStringForThisAlgorithm += '<br/>';
             }
+            suspiciousnessesStringForThisAlgorithm += '<br/>';
             if (algorithmSuspiciousnessForLine !== undefined) {
                 suspiciousnessesStringForThisAlgorithm +=
                     algorithmSuspiciousnessForLine;
@@ -16472,7 +16475,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(lines, sfl
     linesByMethod.forEach(linesOfMethod => {
         linesNextToEachOther = [
             ...linesNextToEachOther,
-            ...groupLinesNextToEachOther(linesOfMethod)
+            ...groupLinesNextToEachOther(linesOfMethod, true)
         ];
     });
     linesNextToEachOther = sortedGroupedLinesBySflRankingOrder(linesNextToEachOther, sflRankingOrder);
