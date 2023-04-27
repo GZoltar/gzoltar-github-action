@@ -84,7 +84,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
 
     // Add a separator row for the table
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += '|:---:'
+      bodyToReturn += '|:---'
     }
     bodyToReturn += '|\n'
   }
@@ -115,37 +115,35 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
         ) {
           let previousLineNumber = linesNextToEachOther[index - 1].lineNumber
           while (previousLineNumber < line.lineNumber - 1) {
-            returnSuspiciousnessForThisLineAndAlgorithm += `**L${
-              previousLineNumber + 1
-            } 𑗅** -------<br>`
+            if (!standAloneTableWithoutLineLocation) {
+              returnSuspiciousnessForThisLineAndAlgorithm += `<br/>`
+            }
             previousLineNumber++
           }
         }
 
         if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-          returnSuspiciousnessForThisLineAndAlgorithm += `**L${
-            line.lineNumber
-          } 𑗅** ${getColoredSuspiciousness(
-            suspiciousnessForThisLineAndAlgorithm
-          )}`
-        } else {
-          returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`
+          returnSuspiciousnessForThisLineAndAlgorithm +=
+            (standAloneTableWithoutLineLocation
+              ? `**L${line.lineNumber} 𑗅** `
+              : '') +
+            `${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`
         }
 
         return returnSuspiciousnessForThisLineAndAlgorithm
       })
     }) // Convert the suspiciousness values to a string
-    .map(algorithmSuspiciousnessLineArray => {
+    .map((algorithmSuspiciousnessLineArray, algIndex) => {
       let suspiciousnessesStringForThisAlgorithm = ''
 
       algorithmSuspiciousnessLineArray.forEach(
         (algorithmSuspiciousnessForLine, index) => {
           if (!standAloneTableWithoutLineLocation) {
             if (index == 0) {
-              suspiciousnessesStringForThisAlgorithm += '<br>'
+              suspiciousnessesStringForThisAlgorithm += `<br/>**${sflRanking[algIndex]}**`
             }
 
-            suspiciousnessesStringForThisAlgorithm += '<br>'
+            suspiciousnessesStringForThisAlgorithm += '<br/>'
           }
 
           if (algorithmSuspiciousnessForLine !== undefined) {
@@ -210,12 +208,12 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(
     bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`
 
     // Add a row for the algorithm names
-    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`
+    bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`
 
     // Add a separator row for the table
     bodyToReturn += '|---|'
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += ':---:|'
+      bodyToReturn += ':---|'
     }
     bodyToReturn += '\n'
 
@@ -299,7 +297,7 @@ export function getStringTableLineSuspiciousnessForSingleLine(
   if (standAloneTableWithoutLineLocation) {
     bodyToReturn += `|⬇ ${sflRanking.join(' | ')}|\n`
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += '|:---:|'
+      bodyToReturn += '|:---|'
     }
     bodyToReturn += '\n'
   }
@@ -341,12 +339,12 @@ export function getStringTableLineSuspiciousness(
     bodyToReturn += `## Line Suspiciousness by Algorithm\n`
 
     // Add a row for the algorithm names
-    bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`
+    bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`
 
     // Add a separator row for the table
     bodyToReturn += '|---|'
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += ':---:|'
+      bodyToReturn += ':---|'
     }
     bodyToReturn += '\n'
 
@@ -406,7 +404,7 @@ function substringStacktraceOnlyOnSpaces(
       stacktraceToReturn +=
         '```' +
         stacktraceAfterSubstring.substring(0, innerIndexOfSpace) +
-        '```<br>'
+        '```<br/>'
       stacktraceAfterSubstring = stacktraceAfterSubstring.substring(
         innerIndexOfSpace + 1
       )

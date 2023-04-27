@@ -16395,7 +16395,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
     if (standAloneTableWithoutLineLocation) {
         bodyToReturn += `| ⬇ ${sflRanking.join(' | ')}|\n`;
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += '|:---:';
+            bodyToReturn += '|:---';
         }
         bodyToReturn += '|\n';
     }
@@ -16416,27 +16416,30 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
                 line.lineNumber > linesNextToEachOther[index - 1].lineNumber + 1) {
                 let previousLineNumber = linesNextToEachOther[index - 1].lineNumber;
                 while (previousLineNumber < line.lineNumber - 1) {
-                    returnSuspiciousnessForThisLineAndAlgorithm += `**L${previousLineNumber + 1} 𑗅** -------<br>`;
+                    if (!standAloneTableWithoutLineLocation) {
+                        returnSuspiciousnessForThisLineAndAlgorithm += `<br/>`;
+                    }
                     previousLineNumber++;
                 }
             }
             if (suspiciousnessForThisLineAndAlgorithm !== undefined) {
-                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** ${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
-            }
-            else {
-                returnSuspiciousnessForThisLineAndAlgorithm += `**L${line.lineNumber} 𑗅** -------`;
+                returnSuspiciousnessForThisLineAndAlgorithm +=
+                    (standAloneTableWithoutLineLocation
+                        ? `**L${line.lineNumber} 𑗅** `
+                        : '') +
+                        `${getColoredSuspiciousness(suspiciousnessForThisLineAndAlgorithm)}`;
             }
             return returnSuspiciousnessForThisLineAndAlgorithm;
         });
     })
-        .map(algorithmSuspiciousnessLineArray => {
+        .map((algorithmSuspiciousnessLineArray, algIndex) => {
         let suspiciousnessesStringForThisAlgorithm = '';
         algorithmSuspiciousnessLineArray.forEach((algorithmSuspiciousnessForLine, index) => {
             if (!standAloneTableWithoutLineLocation) {
                 if (index == 0) {
-                    suspiciousnessesStringForThisAlgorithm += '<br>';
+                    suspiciousnessesStringForThisAlgorithm += `<br/>**${sflRanking[algIndex]}**`;
                 }
-                suspiciousnessesStringForThisAlgorithm += '<br>';
+                suspiciousnessesStringForThisAlgorithm += '<br/>';
             }
             if (algorithmSuspiciousnessForLine !== undefined) {
                 suspiciousnessesStringForThisAlgorithm +=
@@ -16475,10 +16478,10 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(lines, sfl
     linesNextToEachOther = sortedGroupedLinesBySflRankingOrder(linesNextToEachOther, sflRankingOrder);
     if (linesNextToEachOther.length > 0) {
         bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`;
-        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
+        bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`;
         bodyToReturn += '|---|';
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += ':---:|';
+            bodyToReturn += ':---|';
         }
         bodyToReturn += '\n';
         linesNextToEachOther.forEach(lines => {
@@ -16531,7 +16534,7 @@ function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCas
     if (standAloneTableWithoutLineLocation) {
         bodyToReturn += `|⬇ ${sflRanking.join(' | ')}|\n`;
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += '|:---:|';
+            bodyToReturn += '|:---|';
         }
         bodyToReturn += '\n';
     }
@@ -16557,10 +16560,10 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
     });
     if (lines.length > 0) {
         bodyToReturn += `## Line Suspiciousness by Algorithm\n`;
-        bodyToReturn += `|Line | ⬇ ${sflRanking.join(' | ')}|\n`;
+        bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`;
         bodyToReturn += '|---|';
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += ':---:|';
+            bodyToReturn += ':---|';
         }
         bodyToReturn += '\n';
         lines.forEach(line => {
@@ -16599,7 +16602,7 @@ function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
             stacktraceToReturn +=
                 '```' +
                     stacktraceAfterSubstring.substring(0, innerIndexOfSpace) +
-                    '```<br>';
+                    '```<br/>';
             stacktraceAfterSubstring = stacktraceAfterSubstring.substring(innerIndexOfSpace + 1);
         }
         if (stacktraceAfterSubstring.length > 0) {
