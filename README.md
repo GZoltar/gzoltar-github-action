@@ -48,3 +48,7 @@ jobs:
         sfl-ranking-order: "ochiai"
         upload-artifacts: true
 ```
+
+## Example
+
+A repository with a detailed example can be found [here](https://github.com/hugofpaiva/example-gzoltar-feedback-action).
