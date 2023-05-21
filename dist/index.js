@@ -16398,7 +16398,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
     if (standAloneTableWithoutLineLocation) {
         bodyToReturn += `| ⬇ ${sflRanking.join(' | ')}|\n`;
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += '|:---';
+            bodyToReturn += '|:-----';
         }
         bodyToReturn += '|\n';
     }
@@ -16411,7 +16411,7 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(l
     const suspiciousnesses = sflRanking
         .map(algorithm => {
         return linesNextToEachOther.map((line, index) => {
-            let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
+            const suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
                 .find(obj => obj.algorithm === algorithm)
                 ?.suspiciousnessValue.toFixed(2);
             let returnSuspiciousnessForThisLineAndAlgorithm = '';
@@ -16484,9 +16484,9 @@ function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(lines, sfl
     if (linesNextToEachOther.length > 0) {
         bodyToReturn += `## Lines Code Block Suspiciousness by Algorithm\n`;
         bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`;
-        bodyToReturn += '|---|';
+        bodyToReturn += '|-----|';
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += ':---|';
+            bodyToReturn += ':-----|';
         }
         bodyToReturn += '\n';
         linesNextToEachOther.forEach(lines => {
@@ -16539,7 +16539,7 @@ function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCas
     if (standAloneTableWithoutLineLocation) {
         bodyToReturn += `|⬇ ${sflRanking.join(' | ')}|\n`;
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += '|:---|';
+            bodyToReturn += '|:-----|';
         }
         bodyToReturn += '\n';
     }
@@ -16566,9 +16566,9 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
     if (lines.length > 0) {
         bodyToReturn += `## Line Suspiciousness by Algorithm\n`;
         bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`;
-        bodyToReturn += '|---|';
+        bodyToReturn += '|-----|';
         for (let i = 0; i < sflRanking.length; i++) {
-            bodyToReturn += ':---|';
+            bodyToReturn += ':-----|';
         }
         bodyToReturn += '\n';
         lines.forEach(line => {
@@ -16674,11 +16674,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const stateHelper = __importStar(__nccwpck_require__(9319));
 const fs = __importStar(__nccwpck_require__(6497));
-const path = __nccwpck_require__(1017);
+const path_1 = __importDefault(__nccwpck_require__(1017));
 class FileParser {
     constructor() {
         this._sourceCodeFiles = [];
@@ -16690,28 +16693,28 @@ class FileParser {
         this._htmlDirectoriesPaths = [];
     }
     async parse(buildPath, sflRanking, rankingFilesPaths, rankingHTMLDirectoriesPaths, testCasesFilePath, spectraFilePath, matrixFilePath, statisticsFilePath, serializedCoverageFilePath) {
-        buildPath = path.join(stateHelper.rootDirectory, buildPath);
+        buildPath = path_1.default.join(stateHelper.rootDirectory, buildPath);
         if (rankingFilesPaths) {
             rankingFilesPaths = rankingFilesPaths.map(rankingFilePath => {
-                return path.join(stateHelper.rootDirectory, rankingFilePath);
+                return path_1.default.join(stateHelper.rootDirectory, rankingFilePath);
             });
         }
         if (rankingHTMLDirectoriesPaths) {
             rankingHTMLDirectoriesPaths = rankingHTMLDirectoriesPaths.map(rankingHTMLDirectoryPath => {
-                return path.join(stateHelper.rootDirectory, rankingHTMLDirectoryPath);
+                return path_1.default.join(stateHelper.rootDirectory, rankingHTMLDirectoryPath);
             });
         }
         if (testCasesFilePath) {
-            testCasesFilePath = path.join(stateHelper.rootDirectory, testCasesFilePath);
+            testCasesFilePath = path_1.default.join(stateHelper.rootDirectory, testCasesFilePath);
         }
         if (spectraFilePath) {
-            spectraFilePath = path.join(stateHelper.rootDirectory, spectraFilePath);
+            spectraFilePath = path_1.default.join(stateHelper.rootDirectory, spectraFilePath);
         }
         if (matrixFilePath) {
-            matrixFilePath = path.join(stateHelper.rootDirectory, matrixFilePath);
+            matrixFilePath = path_1.default.join(stateHelper.rootDirectory, matrixFilePath);
         }
         if (statisticsFilePath) {
-            statisticsFilePath = path.join(stateHelper.rootDirectory, statisticsFilePath);
+            statisticsFilePath = path_1.default.join(stateHelper.rootDirectory, statisticsFilePath);
         }
         await this.parseTestCases(buildPath, testCasesFilePath);
         await this.parseSpectra(buildPath, spectraFilePath);
@@ -16768,7 +16771,7 @@ class FileParser {
         core.debug(`TestCases file found: '${testCasesFilePath}'`);
         this._filesPaths.push(testCasesFilePath);
         const lines = await fs.readFileAndGetLines(testCasesFilePath);
-        let testCases = [];
+        const testCases = [];
         try {
             lines.forEach(line => {
                 if (line.replace(/\s+/g, '') == 'name,outcome,runtime,stacktrace') {
@@ -16940,13 +16943,13 @@ class FileParser {
                 const methodInfo = methodLocation[1].split('(');
                 const methodName = methodInfo[0];
                 let methodParameters = methodInfo[1].replace(')', '').split(',');
-                methodParameters = methodParameters.map((parameter, index) => {
+                methodParameters = methodParameters.map(parameter => {
                     parameter.trim();
                     return parameter;
                 });
                 const packageName = classFile[0];
                 const className = classFile[1];
-                let sourceCodeFile = this._sourceCodeFiles.find(file => {
+                const sourceCodeFile = this._sourceCodeFiles.find(file => {
                     if (file.name == className && file.packageName == packageName) {
                         return true;
                     }
@@ -16955,7 +16958,7 @@ class FileParser {
                 if (!sourceCodeFile) {
                     throw new Error('Ranking information inconsistent with spectra');
                 }
-                let sourceCodeMethod = this._sourceCodeMethods.find(method => {
+                const sourceCodeMethod = this._sourceCodeMethods.find(method => {
                     if (method.name == methodName &&
                         method.file == sourceCodeFile &&
                         method.parameters.toString() == methodParameters.toString()) {
@@ -16966,7 +16969,7 @@ class FileParser {
                 if (!sourceCodeMethod) {
                     throw new Error('Ranking information inconsistent with spectra');
                 }
-                let sourceCodeLine = this._sourceCodeLines.find(line => {
+                const sourceCodeLine = this._sourceCodeLines.find(line => {
                     if (line.method == sourceCodeMethod &&
                         line.lineNumber == lineIdentifiedOnSpectra) {
                         return true;
@@ -16977,7 +16980,7 @@ class FileParser {
                     throw new Error('Ranking information inconsistent with spectra');
                 }
                 else {
-                    let suspiciousnessMetric = sourceCodeLine.suspiciousnessMetrics.find(suspiciousnessMetric => {
+                    const suspiciousnessMetric = sourceCodeLine.suspiciousnessMetrics.find(suspiciousnessMetric => {
                         if (suspiciousnessMetric.algorithm == ranking) {
                             return true;
                         }
@@ -17087,7 +17090,7 @@ class FileParser {
         core.debug(`Statistics file found: '${statisticsFilePath}'`);
         this._filesPaths.push(statisticsFilePath);
         const lines = await fs.readFileAndGetLines(statisticsFilePath);
-        let statistics = [];
+        const statistics = [];
         try {
             lines.forEach(line => {
                 if (line.replace(/\s+/g, '') == 'formula,metric_name,metric_value') {
@@ -17133,7 +17136,7 @@ class FileParser {
                 }
                 else {
                     core.debug(`Ranking HTML Directory for ranking ${ranking} found: '${rankingHtmlDirectory}'`);
-                    rankingHtmlDirectories.push(rankingHtmlDirectory);
+                    rankingHtmlDirectories?.push(rankingHtmlDirectory);
                 }
             });
         }
@@ -17170,22 +17173,25 @@ exports["default"] = FileParser;
 /***/ }),
 
 /***/ 6497:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fileExists = exports.getFilesFromDirectory = exports.directoryExists = exports.searchDirectory = exports.searchFile = exports.readFileAndGetLines = exports.readFileAndGetLineReader = void 0;
-const fs = __nccwpck_require__(7147);
-const path = __nccwpck_require__(1017);
-const readline = __nccwpck_require__(4521);
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const path_1 = __importDefault(__nccwpck_require__(1017));
+const readline_1 = __importDefault(__nccwpck_require__(4521));
 function readFileAndGetLineReader(path) {
     if (!path) {
         throw new Error("Arg 'path' must not be empty");
     }
     try {
-        const fileStream = fs.createReadStream(path);
-        const rl = readline.createInterface({
+        const fileStream = fs_1.default.createReadStream(path);
+        const rl = readline_1.default.createInterface({
             input: fileStream,
             crlfDelay: Infinity
         });
@@ -17201,8 +17207,8 @@ async function readFileAndGetLines(path) {
         throw new Error("Arg 'path' must not be empty");
     }
     try {
-        const fileStream = fs.createReadStream(path);
-        const rl = readline.createInterface({
+        const fileStream = fs_1.default.createReadStream(path);
+        const rl = readline_1.default.createInterface({
             input: fileStream,
             crlfDelay: Infinity
         });
@@ -17228,18 +17234,18 @@ function searchFile(dir, fileName, classFileMode, packageName, directoryPathToEx
         throw new Error('Arg mismatch. If classFileMode is true, packageName must be present');
     }
     try {
-        const files = fs.readdirSync(dir);
+        const files = fs_1.default.readdirSync(dir);
         for (const file of files) {
-            const filePath = path.join(dir, file);
-            const fileStat = fs.statSync(filePath);
+            const filePath = path_1.default.join(dir, file);
+            const fileStat = fs_1.default.statSync(filePath);
             if (fileStat.isDirectory()) {
                 if (directoryPathToExclude &&
                     filePath.includes(directoryPathToExclude)) {
                     continue;
                 }
-                files.push(...fs
+                files.push(...fs_1.default
                     .readdirSync(filePath)
-                    .map((item) => path.join(file, item)));
+                    .map((item) => path_1.default.join(file, item)));
             }
             else if (file.endsWith(fileName)) {
                 if (classFileMode) {
@@ -17276,9 +17282,9 @@ function searchDirectory(dir, directoryName, upperDirectory) {
         throw new Error("Arg 'directoryName' must not be empty");
     }
     try {
-        const files = fs.readdirSync(dir);
+        const files = fs_1.default.readdirSync(dir);
         for (const file of files) {
-            const directoryPath = path.join(dir, file);
+            const directoryPath = path_1.default.join(dir, file);
             const directories = directoryPath.split('/');
             if (directoryExists(directoryPath)) {
                 if (directories[directories.length - 1] === directoryName) {
@@ -17310,7 +17316,7 @@ function directoryExists(path) {
         throw new Error("Arg 'path' must not be empty");
     }
     try {
-        const fileStat = fs.statSync(path);
+        const fileStat = fs_1.default.statSync(path);
         return fileStat.isDirectory();
     }
     catch (error) {
@@ -17326,7 +17332,7 @@ function getFilesFromDirectory(directoryPath) {
         throw new Error("Arg 'directoryPath' must not be empty");
     }
     try {
-        const files = fs.readdirSync(directoryPath);
+        const files = fs_1.default.readdirSync(directoryPath);
         const filesWithPath = files.map((file) => directoryPath + '/' + file);
         return filesWithPath;
     }
@@ -17340,7 +17346,7 @@ function fileExists(path) {
         throw new Error("Arg 'path' must not be empty");
     }
     try {
-        const fileStat = fs.statSync(path);
+        const fileStat = fs_1.default.statSync(path);
         return !fileStat.isDirectory();
     }
     catch (error) {
@@ -17441,8 +17447,8 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 let linesNextToEachOther = dataProcessingHelper.groupLinesNextToEachOther(linesShownOnDiffFile);
                 linesNextToEachOther =
                     dataProcessingHelper.sortedGroupedLinesBySflRankingOrder(linesNextToEachOther, sflRankingOrder);
-                linesNextToEachOther.forEach((groupOfLines, index) => {
-                    createCommitPRComment(authToken, {
+                linesNextToEachOther.forEach(groupOfLines => {
+                    void createCommitPRComment(authToken, {
                         body: '<details><summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n## Lines Code Block Suspiciousness by Algorithm\n' +
                             dataProcessingHelper.getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEachOther(groupOfLines, sflRanking, true) +
                             '</details>',
@@ -17460,7 +17466,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                     const changedLinesAffected = fileOnDiff.changedLines.find(changed => changed.startLine <= line.lineNumber &&
                         changed.endLine >= line.lineNumber);
                     if (changedLinesAffected) {
-                        createCommitPRComment(authToken, {
+                        void createCommitPRComment(authToken, {
                             body: '<details><summary>Line Suspiciousness by Algorithm</summary>\n\n## Line Suspiciousness by Algorithm\n' +
                                 dataProcessingHelper.getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCases, true) +
                                 '</details>',
@@ -17513,7 +17519,7 @@ async function createCommitPRComment(authToken, inputs, forceCommentOnCommit) {
 }
 async function getFilesOnDiff(authToken) {
     try {
-        if (!stateHelper.baseCommitSha === undefined) {
+        if (stateHelper.baseCommitSha === undefined) {
             core.error(`The base commit sha is undefined. This is needed to get the diff between the base and head commits for this event.`);
             return [];
         }
@@ -17526,9 +17532,6 @@ async function getFilesOnDiff(authToken) {
         });
         if (response.status !== 200) {
             throw new Error(`The request needed to get the diff between the base and head commits for this event returned ${response.status} when it is expected 200.`);
-        }
-        if (response.data.status !== 'ahead') {
-            throw new Error(`The head commit is not ahead of the base commit.`);
         }
         const statusConsidered = [
             'added',
@@ -17548,7 +17551,7 @@ async function getFilesOnDiff(authToken) {
                 const patchLines = file.patch.split('\n');
                 let lastDiffPosition = 0;
                 let currentSection = null;
-                patchLines.forEach((line, index) => {
+                patchLines.forEach(line => {
                     if (line.startsWith('@@')) {
                         if (currentSection) {
                             changedLines.push(currentSection);
@@ -17567,7 +17570,7 @@ async function getFilesOnDiff(authToken) {
                     }
                     else {
                         lastDiffPosition++;
-                        if (line.startsWith('-')) {
+                        if (line.startsWith('-') && currentSection) {
                             currentSection.linesRemovedNotConsidered.push(lastDiffPosition -
                                 currentSection.startDiffPosition +
                                 currentSection.startLine);
@@ -17601,7 +17604,7 @@ async function uploadArtifacts(artifactName, filesPaths, directoriesPaths) {
         });
         const uploadResult = await artifactClient.uploadArtifact(artifactName, filesPaths, rootDirectory, options);
         if (uploadResult.failedItems.length > 0) {
-            core.error(`Failed to upload some artifacts: ${uploadResult.failedItems}`);
+            core.error(`Failed to upload some artifacts: ${uploadResult.failedItems.toString()}`);
         }
     }
     catch (error) {
@@ -17644,7 +17647,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getInputs = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-async function getInputs() {
+function getInputs() {
     const authToken = core.getInput('token', { required: true });
     const buildPath = core.getInput('build-path', { required: true });
     const serializedCoverageFilePath = core.getInput('serialized-coverage-file-path');
@@ -17781,7 +17784,7 @@ const githubActionsHelper = __importStar(__nccwpck_require__(1059));
 async function run() {
     try {
         core.debug(`Parsing inputs...`);
-        const inputs = await inputHelper.getInputs();
+        const inputs = inputHelper.getInputs();
         const fileParser = new fileParser_1.default();
         core.info(`Parsing files...`);
         await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.rankingHTMLDirectoriesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath, inputs.serializedCoverageFilePath);
@@ -17797,7 +17800,7 @@ async function run() {
     }
 }
 if (!stateHelper.IsPost) {
-    run();
+    void run();
 }
 
 

@@ -1,8 +1,8 @@
-const fs = require('fs')
-const path = require('path')
-const readline = require('readline')
+import fs from 'fs'
+import path from 'path'
+import readline from 'readline'
 
-export function readFileAndGetLineReader(path: string): string[] {
+export function readFileAndGetLineReader(path: string): readline.Interface {
   if (!path) {
     throw new Error("Arg 'path' must not be empty")
   }
@@ -90,6 +90,7 @@ export function searchFile(
         )
       } else if (file.endsWith(fileName)) {
         if (classFileMode) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const packageNameSplitted = packageName!.split('.')
           let lastFoundIndex = -1
           packageNameSplitted.every(value => {

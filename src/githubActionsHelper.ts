@@ -115,8 +115,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
             sflRankingOrder
           )
 
-        linesNextToEachOther.forEach((groupOfLines, index) => {
-          createCommitPRComment(
+        linesNextToEachOther.forEach(groupOfLines => {
+          void createCommitPRComment(
             authToken,
             {
               body:
@@ -129,6 +129,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
                 '</details>',
               path: file.path,
               position: getLinePosition(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 file.changedLines.find(
                   changed =>
                     changed.startLine <= groupOfLines[0].lineNumber &&
@@ -156,7 +157,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
             )
 
           if (changedLinesAffected) {
-            createCommitPRComment(
+            void createCommitPRComment(
               authToken,
               {
                 body:
@@ -240,7 +241,7 @@ async function createCommitPRComment(
 
 async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
   try {
-    if (!stateHelper.baseCommitSha === undefined) {
+    if (stateHelper.baseCommitSha === undefined) {
       core.error(
         `The base commit sha is undefined. This is needed to get the diff between the base and head commits for this event.`
       )
@@ -252,7 +253,7 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
     const response = await octokit.rest.repos.compareCommits({
       owner: stateHelper.repoOwner,
       repo: stateHelper.repoName,
-      base: stateHelper.baseCommitSha!,
+      base: stateHelper.baseCommitSha,
       head: stateHelper.currentCommitSha
     })
 
@@ -261,11 +262,6 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
       throw new Error(
         `The request needed to get the diff between the base and head commits for this event returned ${response.status} when it is expected 200.`
       )
-    }
-
-    // Making sure head commit is ahead of the base commit
-    if (response.data.status !== 'ahead') {
-      throw new Error(`The head commit is not ahead of the base commit.`)
     }
 
     const statusConsidered = [
@@ -291,7 +287,7 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
         let lastDiffPosition = 0
         let currentSection: IDiffChangedLines | null = null
 
-        patchLines.forEach((line, index) => {
+        patchLines.forEach(line => {
           if (line.startsWith('@@')) {
             if (currentSection) {
               changedLines.push(currentSection)
@@ -311,11 +307,11 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
           } else {
             lastDiffPosition++
 
-            if (line.startsWith('-')) {
-              currentSection!.linesRemovedNotConsidered.push(
+            if (line.startsWith('-') && currentSection) {
+              currentSection.linesRemovedNotConsidered.push(
                 lastDiffPosition -
-                  currentSection!.startDiffPosition +
-                  currentSection!.startLine
+                  currentSection.startDiffPosition +
+                  currentSection.startLine
               )
             }
           }
@@ -370,7 +366,9 @@ export async function uploadArtifacts(
       )
 
     if (uploadResult.failedItems.length > 0) {
-      core.error(`Failed to upload some artifacts: ${uploadResult.failedItems}`)
+      core.error(
+        `Failed to upload some artifacts: ${uploadResult.failedItems.toString()}`
+      )
     }
   } catch (error) {
     throw new Error(

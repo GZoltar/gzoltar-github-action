@@ -21,6 +21,7 @@ export function groupLinesNextToEachOther(
       (line.lineNumber -
         currentLinesNextToEachOther[currentLinesNextToEachOther.length - 1]
           .lineNumber <=
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         lineSeparationThreshold! &&
         (!limitSizeOfLinesNextToEachOther ||
           currentLinesNextToEachOther.length <= 12))
@@ -89,7 +90,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
 
     // Add a separator row for the table
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += '|:---'
+      bodyToReturn += '|:-----'
     }
     bodyToReturn += '|\n'
   }
@@ -110,7 +111,7 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithLinesNextToEach
   const suspiciousnesses: string[] = sflRanking
     .map(algorithm => {
       return linesNextToEachOther.map((line, index) => {
-        let suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
+        const suspiciousnessForThisLineAndAlgorithm = line.suspiciousnessMetrics
           .find(obj => obj.algorithm === algorithm)
           ?.suspiciousnessValue.toFixed(2)
         let returnSuspiciousnessForThisLineAndAlgorithm = ''
@@ -216,9 +217,9 @@ export function getStringTableLineSuspiciousnessWithCodeBlockWithNormalLines(
     bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`
 
     // Add a separator row for the table
-    bodyToReturn += '|---|'
+    bodyToReturn += '|-----|'
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += ':---|'
+      bodyToReturn += ':-----|'
     }
     bodyToReturn += '\n'
 
@@ -302,7 +303,7 @@ export function getStringTableLineSuspiciousnessForSingleLine(
   if (standAloneTableWithoutLineLocation) {
     bodyToReturn += `|⬇ ${sflRanking.join(' | ')}|\n`
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += '|:---|'
+      bodyToReturn += '|:-----|'
     }
     bodyToReturn += '\n'
   }
@@ -347,9 +348,9 @@ export function getStringTableLineSuspiciousness(
     bodyToReturn += `| | ⬇ ${sflRanking.join(' | ')}|\n`
 
     // Add a separator row for the table
-    bodyToReturn += '|---|'
+    bodyToReturn += '|-----|'
     for (let i = 0; i < sflRanking.length; i++) {
-      bodyToReturn += ':---|'
+      bodyToReturn += ':-----|'
     }
     bodyToReturn += '\n'
 

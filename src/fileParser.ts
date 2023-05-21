@@ -8,7 +8,7 @@ import {ITestCase} from './types/testCase'
 
 import * as stateHelper from './stateHelper'
 import * as fs from './fsHelper'
-const path = require('path')
+import path from 'path'
 
 export default class FileParser {
   private _sourceCodeFiles: ISourceCodeFile[] = []
@@ -19,6 +19,7 @@ export default class FileParser {
   private _filesPaths: string[] = []
   private _htmlDirectoriesPaths: string[] = []
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   constructor() {}
 
   public async parse(
@@ -72,6 +73,7 @@ export default class FileParser {
 
     await this.parseTestCases(buildPath, testCasesFilePath)
     await this.parseSpectra(buildPath, spectraFilePath)
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     sflRanking.forEach(async (ranking, index) => {
       let rankingFilePath: string | undefined = undefined
       if (rankingFilesPaths) {
@@ -128,7 +130,7 @@ export default class FileParser {
     }
 
     if (testCasesFilePath) {
-      if (!fs.fileExists(testCasesFilePath!)) {
+      if (!fs.fileExists(testCasesFilePath)) {
         throw new Error(`TestCases file '${testCasesFilePath}' does not exist`)
       }
     } else {
@@ -143,9 +145,9 @@ export default class FileParser {
     core.debug(`TestCases file found: '${testCasesFilePath}'`)
     this._filesPaths.push(testCasesFilePath)
 
-    const lines = await fs.readFileAndGetLines(testCasesFilePath!)
+    const lines = await fs.readFileAndGetLines(testCasesFilePath)
 
-    let testCases: ITestCase[] = []
+    const testCases: ITestCase[] = []
     try {
       lines.forEach(line => {
         if (line.replace(/\s+/g, '') == 'name,outcome,runtime,stacktrace') {
@@ -155,6 +157,7 @@ export default class FileParser {
         const parts = line.split(',')
 
         if (parts.length < 3) {
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           throw new Error(`TestCases file '${testCasesFilePath}' is invalid`)
         }
 
@@ -187,7 +190,7 @@ export default class FileParser {
     }
 
     if (spectraFilePath) {
-      if (!fs.fileExists(spectraFilePath!)) {
+      if (!fs.fileExists(spectraFilePath)) {
         throw new Error(`spectra file '${spectraFilePath}' does not exist`)
       }
     } else {
@@ -202,7 +205,7 @@ export default class FileParser {
     core.debug(`Spectra file found: '${spectraFilePath}'`)
     this._filesPaths.push(spectraFilePath)
 
-    const lines = await fs.readFileAndGetLines(spectraFilePath!)
+    const lines = await fs.readFileAndGetLines(spectraFilePath)
     try {
       lines.forEach(line => {
         if (line.replace(/\s+/g, '') == 'name') {
@@ -213,6 +216,7 @@ export default class FileParser {
         const parts = line.split(':')
 
         if (parts.length != 2) {
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           throw new Error(`spectra file '${spectraFilePath}' is invalid`)
         }
 
@@ -338,7 +342,7 @@ export default class FileParser {
     }
 
     if (rankingFilePath) {
-      if (!fs.fileExists(rankingFilePath!)) {
+      if (!fs.fileExists(rankingFilePath)) {
         throw new Error(`ranking file '${rankingFilePath}' does not exist`)
       }
     } else {
@@ -355,7 +359,7 @@ export default class FileParser {
     core.debug(`Ranking file found: '${rankingFilePath}'`)
     this._filesPaths.push(rankingFilePath)
 
-    const lines = await fs.readFileAndGetLines(rankingFilePath!)
+    const lines = await fs.readFileAndGetLines(rankingFilePath)
 
     try {
       lines.forEach(line => {
@@ -367,6 +371,7 @@ export default class FileParser {
         const parts = line.split(';')
 
         if (parts.length != 2) {
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           throw new Error(`ranking file '${rankingFilePath}' is invalid`)
         }
         const suspiciousnessValue = parseFloat(parts[1])
@@ -381,7 +386,7 @@ export default class FileParser {
         const methodName = methodInfo[0]
         let methodParameters = methodInfo[1].replace(')', '').split(',')
 
-        methodParameters = methodParameters.map((parameter, index) => {
+        methodParameters = methodParameters.map(parameter => {
           parameter.trim()
           return parameter
         })
@@ -389,7 +394,7 @@ export default class FileParser {
         const packageName = classFile[0]
         const className = classFile[1]
 
-        let sourceCodeFile = this._sourceCodeFiles.find(file => {
+        const sourceCodeFile = this._sourceCodeFiles.find(file => {
           if (file.name == className && file.packageName == packageName) {
             return true
           }
@@ -400,7 +405,7 @@ export default class FileParser {
           throw new Error('Ranking information inconsistent with spectra')
         }
 
-        let sourceCodeMethod = this._sourceCodeMethods.find(method => {
+        const sourceCodeMethod = this._sourceCodeMethods.find(method => {
           if (
             method.name == methodName &&
             method.file == sourceCodeFile &&
@@ -415,7 +420,7 @@ export default class FileParser {
           throw new Error('Ranking information inconsistent with spectra')
         }
 
-        let sourceCodeLine = this._sourceCodeLines.find(line => {
+        const sourceCodeLine = this._sourceCodeLines.find(line => {
           if (
             line.method == sourceCodeMethod &&
             line.lineNumber == lineIdentifiedOnSpectra
@@ -428,17 +433,17 @@ export default class FileParser {
         if (!sourceCodeLine) {
           throw new Error('Ranking information inconsistent with spectra')
         } else {
-          let suspiciousnessMetric = sourceCodeLine.suspiciousnessMetrics.find(
-            suspiciousnessMetric => {
+          const suspiciousnessMetric =
+            sourceCodeLine.suspiciousnessMetrics.find(suspiciousnessMetric => {
               if (suspiciousnessMetric.algorithm == ranking) {
                 return true
               }
               return false
-            }
-          )
+            })
 
           if (suspiciousnessMetric) {
             throw new Error(
+              // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
               `Ranking file '${rankingFilePath}' contains duplicate information for suspiciousness metric '${ranking}'`
             )
           }
@@ -480,7 +485,7 @@ export default class FileParser {
     }
 
     if (matrixFilePath) {
-      if (!fs.fileExists(matrixFilePath!)) {
+      if (!fs.fileExists(matrixFilePath)) {
         throw new Error(`matrix file '${matrixFilePath}' does not exist`)
       }
     } else {
@@ -495,7 +500,7 @@ export default class FileParser {
     core.debug(`Matrix file found: '${matrixFilePath}'`)
     this._filesPaths.push(matrixFilePath)
 
-    const lines = await fs.readFileAndGetLines(matrixFilePath!)
+    const lines = await fs.readFileAndGetLines(matrixFilePath)
 
     if (lines.length != this._testCases.length) {
       throw new Error(`matrix file '${matrixFilePath}' is invalid`)
@@ -506,6 +511,7 @@ export default class FileParser {
         const parts = line.split(' ')
 
         if (parts.length - 1 != this._sourceCodeLines.length) {
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           throw new Error(`matrix file '${matrixFilePath}' is invalid`)
         }
         //TODO check if it follows the testCase and Spectra Order
@@ -527,17 +533,20 @@ export default class FileParser {
             case '+':
               if (!this._testCases[rowIndex].passed)
                 throw new Error(
+                  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                   `Matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
               break
             case '-':
               if (this._testCases[rowIndex].passed)
                 throw new Error(
+                  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                   `Matrix file '${matrixFilePath}' is inconsistent with test results file`
                 )
 
               break
             default:
+              // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
               throw new Error(`Matrix file '${matrixFilePath}' is invalid`)
           }
         })
@@ -562,7 +571,7 @@ export default class FileParser {
     }
 
     if (statisticsFilePath) {
-      if (!fs.fileExists(statisticsFilePath!)) {
+      if (!fs.fileExists(statisticsFilePath)) {
         throw new Error(
           `Statistics file '${statisticsFilePath}' does not exist`
         )
@@ -579,9 +588,9 @@ export default class FileParser {
     core.debug(`Statistics file found: '${statisticsFilePath}'`)
     this._filesPaths.push(statisticsFilePath)
 
-    const lines = await fs.readFileAndGetLines(statisticsFilePath!)
+    const lines = await fs.readFileAndGetLines(statisticsFilePath)
 
-    let statistics: IStatistic[] = []
+    const statistics: IStatistic[] = []
     try {
       lines.forEach(line => {
         if (line.replace(/\s+/g, '') == 'formula,metric_name,metric_value') {
@@ -591,6 +600,7 @@ export default class FileParser {
         const parts = line.split(',')
 
         if (parts.length < 3) {
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           throw new Error(`Statistics file '${statisticsFilePath}' is invalid`)
         }
 
@@ -625,7 +635,7 @@ export default class FileParser {
 
     if (rankingHtmlDirectories) {
       rankingHtmlDirectories.forEach(rankingHtmlDirectory => {
-        if (!fs.directoryExists(rankingHtmlDirectory!)) {
+        if (!fs.directoryExists(rankingHtmlDirectory)) {
           core.error(
             `Ranking HTML Directory '${rankingHtmlDirectory}' does not exist`
           )
@@ -648,7 +658,7 @@ export default class FileParser {
           core.debug(
             `Ranking HTML Directory for ranking ${ranking} found: '${rankingHtmlDirectory}'`
           )
-          rankingHtmlDirectories!.push(rankingHtmlDirectory)
+          rankingHtmlDirectories?.push(rankingHtmlDirectory)
         }
       })
     }
@@ -668,7 +678,7 @@ export default class FileParser {
     }
 
     if (serializedCoverageFilePath) {
-      if (!fs.fileExists(serializedCoverageFilePath!)) {
+      if (!fs.fileExists(serializedCoverageFilePath)) {
         core.error(
           `Serialized Coverage file '${serializedCoverageFilePath}' does not exist`
         )

@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import {IInputs} from './types/inputs'
 
-export async function getInputs(): Promise<IInputs> {
+export function getInputs(): IInputs {
   // Auth token
   const authToken: string = core.getInput('token', {required: true})
 

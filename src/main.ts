@@ -4,12 +4,11 @@ import * as stateHelper from './stateHelper'
 import FileParser from './fileParser'
 import * as inputHelper from './inputHelper'
 import * as githubActionsHelper from './githubActionsHelper'
-import {mainModule} from 'process'
 
 async function run(): Promise<void> {
   try {
     core.debug(`Parsing inputs...`)
-    const inputs = await inputHelper.getInputs()
+    const inputs = inputHelper.getInputs()
 
     const fileParser = new FileParser()
 
@@ -51,5 +50,5 @@ async function run(): Promise<void> {
 }
 
 if (!stateHelper.IsPost) {
-  run()
+  void run()
 }
