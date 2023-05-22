@@ -16770,12 +16770,12 @@ class FileParser {
         }
         core.debug(`TestCases file found: '${testCasesFilePath}'`);
         this._filesPaths.push(testCasesFilePath);
-        const lines = await fs.readFileAndGetLines(testCasesFilePath);
+        const linesReader = fs.readFileAndGetLineReader(testCasesFilePath);
         const testCases = [];
         try {
-            lines.forEach(line => {
+            for await (const line of linesReader) {
                 if (line.replace(/\s+/g, '') == 'name,outcome,runtime,stacktrace') {
-                    return;
+                    continue;
                 }
                 const parts = line.split(',');
                 if (parts.length < 3) {
@@ -16789,7 +16789,7 @@ class FileParser {
                     coverage: []
                 };
                 testCases.push(testCase);
-            });
+            }
             this._testCases = testCases;
             return testCases;
         }
@@ -16816,9 +16816,9 @@ class FileParser {
         }
         core.debug(`Spectra file found: '${spectraFilePath}'`);
         this._filesPaths.push(spectraFilePath);
-        const lines = await fs.readFileAndGetLines(spectraFilePath);
+        const linesReader = fs.readFileAndGetLineReader(spectraFilePath);
         try {
-            lines.forEach(line => {
+            for await (const line of linesReader) {
                 if (line.replace(/\s+/g, '') == 'name') {
                     return;
                 }
@@ -16889,7 +16889,7 @@ class FileParser {
                     };
                     this._sourceCodeLines.push(sourceCodeLine);
                 }
-            });
+            }
         }
         catch (error) {
             throw new Error(`Encountered an error when parsing spectra file '${spectraFilePath}': ${error?.message ?? error}`);
@@ -16925,9 +16925,9 @@ class FileParser {
         }
         core.debug(`Ranking file found: '${rankingFilePath}'`);
         this._filesPaths.push(rankingFilePath);
-        const lines = await fs.readFileAndGetLines(rankingFilePath);
+        const linesReader = fs.readFileAndGetLineReader(rankingFilePath);
         try {
-            lines.forEach(line => {
+            for await (const line of linesReader) {
                 if (line.replace(/\s+/g, '') == 'name;suspiciousness_value') {
                     return;
                 }
@@ -16994,7 +16994,7 @@ class FileParser {
                         suspiciousnessValue: suspiciousnessValue
                     });
                 }
-            });
+            }
         }
         catch (error) {
             throw new Error(`Encountered an error when parsing ranking file '${rankingFilePath}': ${error?.message ?? error}`);
@@ -17027,12 +17027,10 @@ class FileParser {
         }
         core.debug(`Matrix file found: '${matrixFilePath}'`);
         this._filesPaths.push(matrixFilePath);
-        const lines = await fs.readFileAndGetLines(matrixFilePath);
-        if (lines.length != this._testCases.length) {
-            throw new Error(`matrix file '${matrixFilePath}' is invalid`);
-        }
+        const linesReader = fs.readFileAndGetLineReader(matrixFilePath);
         try {
-            lines.forEach((line, rowIndex) => {
+            let rowIndex = 0;
+            for await (const line of linesReader) {
                 const parts = line.split(' ');
                 if (parts.length - 1 != this._sourceCodeLines.length) {
                     throw new Error(`matrix file '${matrixFilePath}' is invalid`);
@@ -17063,7 +17061,8 @@ class FileParser {
                             throw new Error(`Matrix file '${matrixFilePath}' is invalid`);
                     }
                 });
-            });
+                rowIndex++;
+            }
             return this._testCases;
         }
         catch (error) {
@@ -17089,12 +17088,12 @@ class FileParser {
         }
         core.debug(`Statistics file found: '${statisticsFilePath}'`);
         this._filesPaths.push(statisticsFilePath);
-        const lines = await fs.readFileAndGetLines(statisticsFilePath);
+        const linesReader = fs.readFileAndGetLineReader(statisticsFilePath);
         const statistics = [];
         try {
-            lines.forEach(line => {
+            for await (const line of linesReader) {
                 if (line.replace(/\s+/g, '') == 'formula,metric_name,metric_value') {
-                    return;
+                    continue;
                 }
                 const parts = line.split(',');
                 if (parts.length < 3) {
@@ -17106,7 +17105,7 @@ class FileParser {
                     metric_value: parseFloat(parts[2])
                 };
                 statistics.push(statistic);
-            });
+            }
             this._statistics = statistics;
             return statistics;
         }

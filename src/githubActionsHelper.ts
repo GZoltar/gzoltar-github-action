@@ -181,6 +181,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
   } catch (error) {
     throw new Error(
       `Encountered an error when creating Commit/PR comment based on threshold of algorithms: ${
+        // eslint-disable-next-line
         (error as any)?.message ?? error
       }`
     )
@@ -233,6 +234,7 @@ async function createCommitPRComment(
   } catch (error) {
     throw new Error(
       `Encountered an error when creating Commit/PR comment: ${
+        // eslint-disable-next-line
         (error as any)?.message ?? error
       }`
     )
@@ -260,6 +262,7 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
     // Making sure the API call was successful
     if (response.status !== 200) {
       throw new Error(
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         `The request needed to get the diff between the base and head commits for this event returned ${response.status} when it is expected 200.`
       )
     }
@@ -329,6 +332,7 @@ async function getFilesOnDiff(authToken: string): Promise<IFileOnDiff[]> {
   } catch (error) {
     throw new Error(
       `Encountered an error when getting diff: ${
+        // eslint-disable-next-line
         (error as any)?.message ?? error
       }`
     )
@@ -373,6 +377,7 @@ export async function uploadArtifacts(
   } catch (error) {
     throw new Error(
       `Encountered an error when uploading artifacts: ${
+        // eslint-disable-next-line
         (error as any)?.message ?? error
       }`
     )

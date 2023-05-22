@@ -145,14 +145,15 @@ export default class FileParser {
     core.debug(`TestCases file found: '${testCasesFilePath}'`)
     this._filesPaths.push(testCasesFilePath)
 
-    const lines = await fs.readFileAndGetLines(testCasesFilePath)
+    const linesReader = fs.readFileAndGetLineReader(testCasesFilePath)
 
     const testCases: ITestCase[] = []
+
     try {
-      lines.forEach(line => {
+      for await (const line of linesReader) {
         if (line.replace(/\s+/g, '') == 'name,outcome,runtime,stacktrace') {
           // next line
-          return
+          continue
         }
         const parts = line.split(',')
 
@@ -170,7 +171,7 @@ export default class FileParser {
         }
 
         testCases.push(testCase)
-      })
+      }
       this._testCases = testCases
       return testCases
     } catch (error) {
@@ -205,9 +206,9 @@ export default class FileParser {
     core.debug(`Spectra file found: '${spectraFilePath}'`)
     this._filesPaths.push(spectraFilePath)
 
-    const lines = await fs.readFileAndGetLines(spectraFilePath)
+    const linesReader = fs.readFileAndGetLineReader(spectraFilePath)
     try {
-      lines.forEach(line => {
+      for await (const line of linesReader) {
         if (line.replace(/\s+/g, '') == 'name') {
           // next line
           return
@@ -302,7 +303,7 @@ export default class FileParser {
           }
           this._sourceCodeLines.push(sourceCodeLine)
         }
-      })
+      }
     } catch (error) {
       throw new Error(
         `Encountered an error when parsing spectra file '${spectraFilePath}': ${
@@ -359,10 +360,10 @@ export default class FileParser {
     core.debug(`Ranking file found: '${rankingFilePath}'`)
     this._filesPaths.push(rankingFilePath)
 
-    const lines = await fs.readFileAndGetLines(rankingFilePath)
+    const linesReader = fs.readFileAndGetLineReader(rankingFilePath)
 
     try {
-      lines.forEach(line => {
+      for await (const line of linesReader) {
         if (line.replace(/\s+/g, '') == 'name;suspiciousness_value') {
           // next line
           return
@@ -453,7 +454,7 @@ export default class FileParser {
             suspiciousnessValue: suspiciousnessValue
           })
         }
-      })
+      }
     } catch (error) {
       throw new Error(
         `Encountered an error when parsing ranking file '${rankingFilePath}': ${
@@ -500,14 +501,11 @@ export default class FileParser {
     core.debug(`Matrix file found: '${matrixFilePath}'`)
     this._filesPaths.push(matrixFilePath)
 
-    const lines = await fs.readFileAndGetLines(matrixFilePath)
-
-    if (lines.length != this._testCases.length) {
-      throw new Error(`matrix file '${matrixFilePath}' is invalid`)
-    }
+    const linesReader = fs.readFileAndGetLineReader(matrixFilePath)
 
     try {
-      lines.forEach((line, rowIndex) => {
+      let rowIndex = 0
+      for await (const line of linesReader) {
         const parts = line.split(' ')
 
         if (parts.length - 1 != this._sourceCodeLines.length) {
@@ -550,7 +548,8 @@ export default class FileParser {
               throw new Error(`Matrix file '${matrixFilePath}' is invalid`)
           }
         })
-      })
+        rowIndex++
+      }
       return this._testCases
     } catch (error) {
       throw new Error(
@@ -588,14 +587,14 @@ export default class FileParser {
     core.debug(`Statistics file found: '${statisticsFilePath}'`)
     this._filesPaths.push(statisticsFilePath)
 
-    const lines = await fs.readFileAndGetLines(statisticsFilePath)
+    const linesReader = fs.readFileAndGetLineReader(statisticsFilePath)
 
     const statistics: IStatistic[] = []
     try {
-      lines.forEach(line => {
+      for await (const line of linesReader) {
         if (line.replace(/\s+/g, '') == 'formula,metric_name,metric_value') {
           // next line
-          return
+          continue
         }
         const parts = line.split(',')
 
@@ -611,7 +610,7 @@ export default class FileParser {
         }
 
         statistics.push(statistic)
-      })
+      }
       this._statistics = statistics
       return statistics
     } catch (error) {
