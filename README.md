@@ -24,7 +24,7 @@ Analyzes GZoltar results and posts a comment on the pull request/commit with the
 
 ## Usage
 
-Executing automatic feedback action after GZoltar fault-localization 
+Executing Automatic Feedback Action after GZoltar Fault Localization:
 
 ```yaml
 name: GZoltar Fault Localization
@@ -48,3 +48,7 @@ jobs:
         sfl-ranking-order: "ochiai"
         upload-artifacts: true
 ```
+
+## Example
+
+A repository with a detailed example can be found [here](https://github.com/hugofpaiva/example-gzoltar-feedback-action).
