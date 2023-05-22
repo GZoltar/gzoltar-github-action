@@ -211,7 +211,7 @@ export default class FileParser {
       for await (const line of linesReader) {
         if (line.replace(/\s+/g, '') == 'name') {
           // next line
-          return
+          continue
         }
 
         const parts = line.split(':')
@@ -366,7 +366,7 @@ export default class FileParser {
       for await (const line of linesReader) {
         if (line.replace(/\s+/g, '') == 'name;suspiciousness_value') {
           // next line
-          return
+          continue
         }
 
         const parts = line.split(';')

@@ -16820,7 +16820,7 @@ class FileParser {
         try {
             for await (const line of linesReader) {
                 if (line.replace(/\s+/g, '') == 'name') {
-                    return;
+                    continue;
                 }
                 const parts = line.split(':');
                 if (parts.length != 2) {
@@ -16929,7 +16929,7 @@ class FileParser {
         try {
             for await (const line of linesReader) {
                 if (line.replace(/\s+/g, '') == 'name;suspiciousness_value') {
-                    return;
+                    continue;
                 }
                 const parts = line.split(';');
                 if (parts.length != 2) {
