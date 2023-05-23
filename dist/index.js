@@ -17397,6 +17397,7 @@ const stateHelper = __importStar(__nccwpck_require__(9319));
 const dataProcessingHelper = __importStar(__nccwpck_require__(2209));
 const fs = __importStar(__nccwpck_require__(6497));
 async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRanking, sflThreshold, sflRankingOrder, parsedLines, testCases, diffCommentsInCodeBlock) {
+    core.debug(`Creating main commit/PR threshold comment...`);
     try {
         let body = '';
         const lines = [];
@@ -17437,6 +17438,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         }
         body += '\n\n';
         await createCommitPRComment(authToken, { body });
+        core.info(`Creating commit/PR threshold diff comment...`);
         const filesOnDiff = await getFilesOnDiff(authToken);
         if (diffCommentsInCodeBlock) {
             filesOnDiff.forEach(file => {

@@ -19,6 +19,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
   testCases: ITestCase[],
   diffCommentsInCodeBlock: boolean
 ) {
+  core.debug(`Creating main commit/PR threshold comment...`)
   try {
     let body = ''
     const lines: ISourceCodeLine[] = []
@@ -89,6 +90,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
 
     await createCommitPRComment(authToken, {body})
 
+    core.info(`Creating commit/PR threshold diff comment...`)
     // Create comment on diff of commit
     const filesOnDiff: IFileOnDiff[] = await getFilesOnDiff(authToken)
 
