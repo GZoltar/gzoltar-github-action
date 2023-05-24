@@ -88,7 +88,7 @@ export function searchFile(
             .readdirSync(filePath)
             .map((item: string) => path.join(file, item))
         )
-      } else if (file == fileName) {
+      } else if (file.split('/').slice(-1)[0] == fileName) {
         if (classFileMode) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const packageNameSplitted = packageName!.split('.')
