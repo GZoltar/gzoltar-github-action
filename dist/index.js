@@ -17246,7 +17246,7 @@ function searchFile(dir, fileName, classFileMode, packageName, directoryPathToEx
                     .readdirSync(filePath)
                     .map((item) => path_1.default.join(file, item)));
             }
-            else if (file.endsWith(fileName)) {
+            else if (file == fileName) {
                 if (classFileMode) {
                     const packageNameSplitted = packageName.split('.');
                     let lastFoundIndex = -1;
