@@ -33,7 +33,11 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
           )
         )
         .forEach(line => {
-          if (!lines.some(l => l.lineNumber === line.lineNumber)) {
+          if (
+            !lines.some(
+              l => l.lineNumber === line.lineNumber && l.method === line.method
+            )
+          ) {
             lines.push(line)
           }
         })

@@ -17406,7 +17406,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 .filter(line => line.suspiciousnessMetrics.some(suspiciousnessMetric => suspiciousnessMetric.algorithm === algorithm &&
                 suspiciousnessMetric.suspiciousnessValue >= sflThreshold[index]))
                 .forEach(line => {
-                if (!lines.some(l => l.lineNumber === line.lineNumber)) {
+                if (!lines.some(l => l.lineNumber === line.lineNumber && l.method === line.method)) {
                     lines.push(line);
                 }
             });
