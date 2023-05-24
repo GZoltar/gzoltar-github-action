@@ -17421,8 +17421,13 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             return bSuspiciousnessValue - aSuspiciousnessValue;
         });
         if (lines.length === 0) {
-            body +=
-                '✅ **As there is no failing test, GZoltar has nothing to report** 🙌';
+            if (!testCases.some(testCase => testCase.passed === false)) {
+                body +=
+                    '✅ **As there is no failing test, GZoltar has nothing to report** 🙌';
+            }
+            else {
+                body += '**Based on the action inputs, GZoltar has nothing to report**';
+            }
         }
         else {
             body += '⚠️ **GZoltar localized possible bugs** ⚠️';
