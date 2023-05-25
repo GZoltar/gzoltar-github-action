@@ -23,6 +23,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
   try {
     let body = ''
     const lines: ISourceCodeLine[] = []
+    core.debug(`Filtering lines based on the algorithms threshold...`)
     sflRanking.forEach((algorithm, index) => {
       parsedLines
         .filter(line =>
@@ -43,6 +44,9 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
         })
     })
 
+    core.debug(
+      `Sorting lines based on the ranking algorithm to order table results...`
+    )
     lines.sort((a, b) => {
       const aSuspiciousnessValue = a.suspiciousnessMetrics.find(
         obj => obj.algorithm === sflRankingOrder
@@ -73,6 +77,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
     } else {
       body += '⚠️ **GZoltar localized possible bugs** ⚠️'
 
+      core.debug(`Processing Line Suspiciousness by Algorithm...`)
       body +=
         '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n'
       body += dataProcessingHelper.getStringTableLineSuspiciousness(
@@ -83,6 +88,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
       )
       body += '</details>\n'
 
+      core.debug(`Processing Lines Code Block Suspiciousness by Algorithm...`)
       body +=
         '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n'
       body +=

@@ -17401,6 +17401,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
     try {
         let body = '';
         const lines = [];
+        core.debug(`Filtering lines based on the algorithms threshold...`);
         sflRanking.forEach((algorithm, index) => {
             parsedLines
                 .filter(line => line.suspiciousnessMetrics.some(suspiciousnessMetric => suspiciousnessMetric.algorithm === algorithm &&
@@ -17411,6 +17412,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
                 }
             });
         });
+        core.debug(`Sorting lines based on the ranking algorithm to order table results...`);
         lines.sort((a, b) => {
             const aSuspiciousnessValue = a.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
             const bSuspiciousnessValue = b.suspiciousnessMetrics.find(obj => obj.algorithm === sflRankingOrder)?.suspiciousnessValue;
@@ -17431,10 +17433,12 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         }
         else {
             body += '⚠️ **GZoltar localized possible bugs** ⚠️';
+            core.debug(`Processing Line Suspiciousness by Algorithm...`);
             body +=
                 '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';
             body += dataProcessingHelper.getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, testCases);
             body += '</details>\n';
+            core.debug(`Processing Lines Code Block Suspiciousness by Algorithm...`);
             body +=
                 '<details>\n<summary>Lines Code Block Suspiciousness by Algorithm</summary>\n\n';
             body +=
