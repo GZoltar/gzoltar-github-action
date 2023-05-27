@@ -1,14 +1,22 @@
 import * as core from '@actions/core'
 
+import {IInputs} from './types/inputs'
 import * as stateHelper from './stateHelper'
 import FileParser from './fileParser'
-import * as inputHelper from './inputHelper'
 import * as githubActionsHelper from './githubActionsHelper'
 
 async function run(): Promise<void> {
   try {
     core.debug(`Parsing inputs...`)
-    const inputs = inputHelper.getInputs()
+    const inputs: IInputs = {
+      buildPath: '/target/site/gzoltar',
+      sflRanking: ['ochiai'],
+      sflThreshold: [0.5],
+      sflRankingOrder: 'ochiai',
+      diffCommentsInCodeBlock: true,
+      uploadArtifacts: false,
+      authToken: 'token'
+    }
 
     const fileParser = new FileParser()
 
@@ -24,7 +32,7 @@ async function run(): Promise<void> {
       inputs.statisticsFilePath,
       inputs.serializedCoverageFilePath
     )
-
+    return
     core.info(`Creating commit/PR threshold comment...`)
     await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(
       inputs.authToken,

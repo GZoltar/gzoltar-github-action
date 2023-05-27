@@ -1,4 +1,4 @@
-import {ITestCaseLineCoverage} from './testCaseLineCoverage'
+import {ISourceCodeLine} from './sourceCodeLine'
 
 export interface ITestCase {
   testName: string
@@ -19,7 +19,7 @@ export interface ITestCase {
   stacktrace?: string
 
   /**
-   * line coverage for this test case
+   * line coverage for this test case. If a line is included in this array, it means that the line was covered.
    */
-  coverage: ITestCaseLineCoverage[]
+  coverage: ISourceCodeLine[]
 }

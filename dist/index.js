@@ -16505,7 +16505,7 @@ function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCas
         ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
         : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
     const lineCoveredTests = testCases
-        .filter(testCase => testCase.coverage.some(coverage => coverage.line === line && coverage.covered))
+        .filter(testCase => testCase.coverage.some(coverage => coverage === line))
         .sort((a, b) => {
         if (a.passed && !b.passed) {
             return 1;
@@ -17038,16 +17038,9 @@ class FileParser {
                 parts.forEach((testLineCoverage, columnIndex) => {
                     switch (testLineCoverage) {
                         case '0':
-                            this._testCases[rowIndex].coverage.push({
-                                line: this._sourceCodeLines[columnIndex],
-                                covered: false
-                            });
                             break;
                         case '1':
-                            this._testCases[rowIndex].coverage.push({
-                                line: this._sourceCodeLines[columnIndex],
-                                covered: true
-                            });
+                            this._testCases[rowIndex].coverage.push(this._sourceCodeLines[columnIndex]);
                             break;
                         case '+':
                             if (!this._testCases[rowIndex].passed)
@@ -17629,134 +17622,6 @@ exports.uploadArtifacts = uploadArtifacts;
 
 /***/ }),
 
-/***/ 3256:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getInputs = void 0;
-const core = __importStar(__nccwpck_require__(2186));
-function getInputs() {
-    const authToken = core.getInput('token', { required: true });
-    const buildPath = core.getInput('build-path', { required: true });
-    const serializedCoverageFilePath = core.getInput('serialized-coverage-file-path');
-    const testCasesFilePath = core.getInput('test-cases-file-path');
-    const spectraFilePath = core.getInput('spectra-file-path');
-    const matrixFilePath = core.getInput('matrix-file-path');
-    const statisticsFilePath = core.getInput('statistics-file-path');
-    let rankingFilesPaths = undefined;
-    try {
-        const rankingFilesPathsString = core.getInput('ranking-files-paths');
-        if (rankingFilesPathsString !== '') {
-            rankingFilesPaths = rankingFilesPathsString
-                .replace(/\[|\]/g, '')
-                .replace(/\s+/g, '')
-                .split(',');
-        }
-    }
-    catch (error) {
-        throw new Error('Invalid form of input `ranking-files-paths`. It should be a comma separated list of strings.');
-    }
-    let rankingHTMLDirectoriesPaths = undefined;
-    try {
-        const rankingHTMLDirectoriesPathsString = core.getInput('ranking-html-directories-paths');
-        if (rankingHTMLDirectoriesPathsString !== '') {
-            rankingHTMLDirectoriesPaths = rankingHTMLDirectoriesPathsString
-                .replace(/\[|\]/g, '')
-                .replace(/\s+/g, '')
-                .split(',');
-        }
-    }
-    catch (error) {
-        throw new Error('Invalid form of input `ranking-html-directories-paths`. It should be a comma separated list of strings.');
-    }
-    let sflRanking = [];
-    try {
-        sflRanking = core
-            .getInput('sfl-ranking', { required: true })
-            .replace(/\[|\]/g, '')
-            .replace(/\s+/g, '')
-            .split(',');
-    }
-    catch (error) {
-        throw new Error('Invalid form of input `sfl-ranking`. It should be a comma separated list of strings.');
-    }
-    let sflThreshold = [];
-    try {
-        sflThreshold = core
-            .getInput('sfl-threshold', { required: true })
-            .replace(/\[|\]/g, '')
-            .replace(/\s+/g, '')
-            .split(',')
-            .map(value => parseFloat(value));
-    }
-    catch (error) {
-        throw new Error('Invalid form of input `sfl-threshold`. It should be a comma separated list of numbers.');
-    }
-    if (sflRanking.length !== sflThreshold.length) {
-        throw new Error('The number of elements in `sfl-ranking` and `sfl-threshold` should be the same.');
-    }
-    if (rankingFilesPaths && sflRanking.length !== rankingFilesPaths.length) {
-        throw new Error('The number of elements in `sfl-ranking` and `ranking-files-paths` should be the same.');
-    }
-    if (rankingHTMLDirectoriesPaths &&
-        sflRanking.length !== rankingHTMLDirectoriesPaths.length) {
-        throw new Error('The number of elements in `sfl-ranking` and `ranking-html-directories-paths` should be the same.');
-    }
-    const sflRankingOrder = core.getInput('sfl-ranking-order');
-    if (sflRanking.indexOf(sflRankingOrder)) {
-        throw new Error('The value of `sfl-ranking-order` should be one of the elements in `sfl-ranking`.');
-    }
-    const diffCommentsInCodeBlock = core.getInput('diff-comments-code-block') === 'true';
-    const uploadArtifacts = core.getInput('upload-artifacts') === 'true';
-    return {
-        authToken: authToken,
-        buildPath: buildPath,
-        serializedCoverageFilePath: serializedCoverageFilePath === ''
-            ? undefined
-            : serializedCoverageFilePath,
-        testCasesFilePath: testCasesFilePath === '' ? undefined : testCasesFilePath,
-        spectraFilePath: spectraFilePath === '' ? undefined : spectraFilePath,
-        matrixFilePath: matrixFilePath === '' ? undefined : matrixFilePath,
-        statisticsFilePath: statisticsFilePath === '' ? undefined : statisticsFilePath,
-        rankingFilesPaths: rankingFilesPaths,
-        rankingHTMLDirectoriesPaths: rankingHTMLDirectoriesPaths,
-        sflRanking: sflRanking,
-        sflThreshold: sflThreshold,
-        sflRankingOrder: sflRankingOrder,
-        diffCommentsInCodeBlock: diffCommentsInCodeBlock,
-        uploadArtifacts: uploadArtifacts
-    };
-}
-exports.getInputs = getInputs;
-
-
-/***/ }),
-
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -17792,15 +17657,23 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const stateHelper = __importStar(__nccwpck_require__(9319));
 const fileParser_1 = __importDefault(__nccwpck_require__(7303));
-const inputHelper = __importStar(__nccwpck_require__(3256));
 const githubActionsHelper = __importStar(__nccwpck_require__(1059));
 async function run() {
     try {
         core.debug(`Parsing inputs...`);
-        const inputs = inputHelper.getInputs();
+        const inputs = {
+            buildPath: '/target/site/gzoltar',
+            sflRanking: ['ochiai'],
+            sflThreshold: [0.5],
+            sflRankingOrder: 'ochiai',
+            diffCommentsInCodeBlock: true,
+            uploadArtifacts: false,
+            authToken: 'token'
+        };
         const fileParser = new fileParser_1.default();
         core.info(`Parsing files...`);
         await fileParser.parse(inputs.buildPath, inputs.sflRanking, inputs.rankingFilesPaths, inputs.rankingHTMLDirectoriesPaths, inputs.testCasesFilePath, inputs.spectraFilePath, inputs.matrixFilePath, inputs.statisticsFilePath, inputs.serializedCoverageFilePath);
+        return;
         core.info(`Creating commit/PR threshold comment...`);
         await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(inputs.authToken, inputs.sflRanking, inputs.sflThreshold, inputs.sflRankingOrder, fileParser.sourceCodeLines, fileParser.testCases, inputs.diffCommentsInCodeBlock);
         if (inputs.uploadArtifacts) {
@@ -17853,6 +17726,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 exports.IsPost = !!core.getState('isPost');
 function getCurrentCommitSha() {
+    return 'sha';
     if (github.context.eventName == 'pull_request') {
         return github.context.payload.pull_request?.head.sha;
     }
@@ -17861,6 +17735,7 @@ function getCurrentCommitSha() {
     }
 }
 function getBaseCommitSha() {
+    return 'sha';
     if (github.context.eventName == 'pull_request') {
         return github.context.payload.pull_request?.base.sha;
     }
@@ -17873,20 +17748,20 @@ function getBaseCommitSha() {
 }
 exports.baseCommitSha = getBaseCommitSha();
 exports.currentCommitSha = getCurrentCommitSha();
-exports.isInPullRequest = github.context.eventName == 'pull_request';
-exports.isInPush = github.context.eventName == 'push';
-exports.pullRequestNumber = github.context.issue.number;
-exports.currentSha = github.context.sha;
+exports.isInPullRequest = false;
+exports.isInPush = true;
+exports.pullRequestNumber = 1;
+exports.currentSha = 'sha';
 function getRootDirectory() {
-    const rootDirectory = process.env.GITHUB_WORKSPACE;
+    const rootDirectory = '/Users/paiva/Documents/Tese/fastjson';
     if (rootDirectory == undefined) {
         throw new Error('GITHUB_WORKSPACE is not defined');
     }
     return rootDirectory;
 }
 exports.rootDirectory = getRootDirectory();
-exports.repoOwner = github.context.repo.owner;
-exports.repoName = github.context.repo.repo;
+exports.repoOwner = 'hugofpaiva';
+exports.repoName = 'repo-example';
 
 
 /***/ }),

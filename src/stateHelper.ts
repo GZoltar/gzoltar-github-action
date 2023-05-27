@@ -12,6 +12,7 @@ export const IsPost = !!core.getState('isPost')
  * @returns The current sha of the pull request or the current sha of the commit.
  */
 function getCurrentCommitSha(): string {
+  return 'sha'
   if (github.context.eventName == 'pull_request') {
     return github.context.payload.pull_request?.head.sha
   } else {
@@ -26,6 +27,7 @@ function getCurrentCommitSha(): string {
  * @throws Error if the event is not a pull request and the previous sha is not defined.
  */
 function getBaseCommitSha(): string | undefined {
+  return 'sha'
   if (github.context.eventName == 'pull_request') {
     return github.context.payload.pull_request?.base.sha
   } else if (github.context.eventName == 'push') {
@@ -41,21 +43,21 @@ export const baseCommitSha = getBaseCommitSha()
 
 export const currentCommitSha = getCurrentCommitSha()
 
-export const isInPullRequest = github.context.eventName == 'pull_request'
+export const isInPullRequest = false
 
-export const isInPush = github.context.eventName == 'push'
+export const isInPush = true
 
 // Issues and PRs are the same for the GitHub API
-export const pullRequestNumber = github.context.issue.number
+export const pullRequestNumber = 1
 
-export const currentSha = github.context.sha
+export const currentSha = 'sha'
 
 /**
  * It returns the root directory of the repository
  * @returns The root directory of the repository.
  */
 function getRootDirectory(): string {
-  const rootDirectory = process.env.GITHUB_WORKSPACE
+  const rootDirectory = '/Users/paiva/Documents/Tese/fastjson'
   if (rootDirectory == undefined) {
     throw new Error('GITHUB_WORKSPACE is not defined')
   }
@@ -64,6 +66,6 @@ function getRootDirectory(): string {
 
 export const rootDirectory = getRootDirectory()
 
-export const repoOwner = github.context.repo.owner
+export const repoOwner = 'hugofpaiva'
 
-export const repoName = github.context.repo.repo
+export const repoName = 'repo-example'
