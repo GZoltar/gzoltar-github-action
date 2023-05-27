@@ -16522,7 +16522,7 @@ function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCas
         lineCoveredTestsString += `<table><thead><tr><th>Test Case</th><th>Result</th><th>Stacktrace</th></tr></thead><tbody>`;
         lineCoveredTests.forEach(testCase => {
             lineCoveredTestsString += `<tr><td>${testCase.testName}</td><td>${testCase.passed ? '✅' : '❌'}</td><td>${testCase.stacktrace
-                ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
+                ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75, 300)
                 : '---'}</td></tr>`;
         });
         lineCoveredTestsString += '</tbody></table></details>';
@@ -16578,30 +16578,33 @@ function getStringTableLineSuspiciousness(lines, sflRanking, sflRankingOrder, te
     return bodyToReturn;
 }
 exports.getStringTableLineSuspiciousness = getStringTableLineSuspiciousness;
-function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
+function substringStacktraceOnlyOnSpaces(stacktrace, maxLineLength, maxLength) {
     let stacktraceToReturn = '';
     let stacktraceAfterSubstring = '';
-    if (stacktrace.length > maxLength) {
-        let indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ');
+    if (stacktrace.length > maxLineLength) {
+        let indexOfSpace = stacktrace.substring(0, maxLineLength).lastIndexOf(' ');
         if (indexOfSpace < 25) {
-            const newIndexOfSpace = stacktrace.substring(maxLength).indexOf(' ');
+            const newIndexOfSpace = stacktrace.substring(maxLineLength).indexOf(' ');
             indexOfSpace =
-                newIndexOfSpace > 0 ? newIndexOfSpace + maxLength : indexOfSpace;
+                newIndexOfSpace > 0 ? newIndexOfSpace + maxLineLength : indexOfSpace;
         }
         stacktraceToReturn += '```' + stacktrace.substring(0, indexOfSpace) + '```';
         stacktraceAfterSubstring = stacktrace.substring(indexOfSpace + 1);
         stacktraceToReturn += '<details><summary>...</summary>';
-        while (stacktraceAfterSubstring.length > maxLength) {
+        while (stacktraceAfterSubstring.length > maxLineLength) {
+            if (stacktraceToReturn.length > maxLength) {
+                break;
+            }
             let innerIndexOfSpace = stacktraceAfterSubstring
-                .substring(0, maxLength)
+                .substring(0, maxLineLength)
                 .lastIndexOf(' ');
             if (innerIndexOfSpace < 25) {
                 const newInnerIndexOfSpace = stacktraceAfterSubstring
-                    .substring(maxLength)
+                    .substring(maxLineLength)
                     .indexOf(' ');
                 innerIndexOfSpace =
                     newInnerIndexOfSpace > 0
-                        ? newInnerIndexOfSpace + maxLength
+                        ? newInnerIndexOfSpace + maxLineLength
                         : innerIndexOfSpace;
             }
             stacktraceToReturn +=
@@ -16610,7 +16613,10 @@ function substringStacktraceOnlyOnSpaces(stacktrace, maxLength) {
                     '```<br/>';
             stacktraceAfterSubstring = stacktraceAfterSubstring.substring(innerIndexOfSpace + 1);
         }
-        if (stacktraceAfterSubstring.length > 0) {
+        if (stacktraceToReturn.length > maxLength) {
+            stacktraceToReturn += '```...```';
+        }
+        else if (stacktraceAfterSubstring.length > 0) {
             stacktraceToReturn += '```' + stacktraceAfterSubstring + '```';
         }
         stacktraceToReturn += '</details>';
