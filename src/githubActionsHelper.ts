@@ -102,6 +102,8 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
 
     body += '\n\n'
 
+    return
+
     await createCommitPRComment(authToken, {body})
 
     core.info(`Creating commit/PR threshold diff comment...`)

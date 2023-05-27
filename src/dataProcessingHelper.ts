@@ -281,7 +281,7 @@ export function getStringTableLineSuspiciousnessForSingleLine(
         testCase.passed ? '✅' : '❌'
       }</td><td>${
         testCase.stacktrace
-          ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75)
+          ? substringStacktraceOnlyOnSpaces(testCase.stacktrace, 75, 300)
           : '---'
       }</td></tr>`
     })
@@ -369,22 +369,24 @@ export function getStringTableLineSuspiciousness(
 /**
  * Substring a stacktrace only on spaces
  * @param stacktrace The stacktrace to substring
- * @param maxLength The maximum length of each line the stacktrace
+ * @param maxLineLength The maximum length of each line the stacktrace
+ * @param maxLength The maximum length of the total string
  * @returns The string containing multiple substringed lines of the stacktrace
  */
 function substringStacktraceOnlyOnSpaces(
   stacktrace: string,
+  maxLineLength: number,
   maxLength: number
 ): string {
   let stacktraceToReturn = ''
   let stacktraceAfterSubstring = ''
-  if (stacktrace.length > maxLength) {
-    let indexOfSpace = stacktrace.substring(0, maxLength).lastIndexOf(' ')
+  if (stacktrace.length > maxLineLength) {
+    let indexOfSpace = stacktrace.substring(0, maxLineLength).lastIndexOf(' ')
 
     if (indexOfSpace < 25) {
-      const newIndexOfSpace = stacktrace.substring(maxLength).indexOf(' ')
+      const newIndexOfSpace = stacktrace.substring(maxLineLength).indexOf(' ')
       indexOfSpace =
-        newIndexOfSpace > 0 ? newIndexOfSpace + maxLength : indexOfSpace
+        newIndexOfSpace > 0 ? newIndexOfSpace + maxLineLength : indexOfSpace
     }
 
     stacktraceToReturn += '```' + stacktrace.substring(0, indexOfSpace) + '```'
@@ -392,18 +394,21 @@ function substringStacktraceOnlyOnSpaces(
 
     stacktraceToReturn += '<details><summary>...</summary>'
 
-    while (stacktraceAfterSubstring.length > maxLength) {
+    while (stacktraceAfterSubstring.length > maxLineLength) {
+      if (stacktraceToReturn.length > maxLength) {
+        break
+      }
       let innerIndexOfSpace = stacktraceAfterSubstring
-        .substring(0, maxLength)
+        .substring(0, maxLineLength)
         .lastIndexOf(' ')
 
       if (innerIndexOfSpace < 25) {
         const newInnerIndexOfSpace = stacktraceAfterSubstring
-          .substring(maxLength)
+          .substring(maxLineLength)
           .indexOf(' ')
         innerIndexOfSpace =
           newInnerIndexOfSpace > 0
-            ? newInnerIndexOfSpace + maxLength
+            ? newInnerIndexOfSpace + maxLineLength
             : innerIndexOfSpace
       }
 
@@ -416,7 +421,9 @@ function substringStacktraceOnlyOnSpaces(
       )
     }
 
-    if (stacktraceAfterSubstring.length > 0) {
+    if (stacktraceToReturn.length > maxLength) {
+      stacktraceToReturn += '```...```'
+    } else if (stacktraceAfterSubstring.length > 0) {
       stacktraceToReturn += '```' + stacktraceAfterSubstring + '```'
     }
 

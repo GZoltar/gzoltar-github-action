@@ -32,7 +32,7 @@ async function run(): Promise<void> {
       inputs.statisticsFilePath,
       inputs.serializedCoverageFilePath
     )
-    return
+
     core.info(`Creating commit/PR threshold comment...`)
     await githubActionsHelper.createCommitPRCommentLineSuspiciousnessThreshold(
       inputs.authToken,
@@ -43,6 +43,8 @@ async function run(): Promise<void> {
       fileParser.testCases,
       inputs.diffCommentsInCodeBlock
     )
+
+    return
 
     if (inputs.uploadArtifacts) {
       core.info(`Uploading artifacts...`)
