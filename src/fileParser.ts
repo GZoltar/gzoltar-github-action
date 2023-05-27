@@ -517,16 +517,11 @@ export default class FileParser {
         parts.forEach((testLineCoverage, columnIndex) => {
           switch (testLineCoverage) {
             case '0':
-              this._testCases[rowIndex].coverage.push({
-                line: this._sourceCodeLines[columnIndex],
-                covered: false
-              })
               break
             case '1':
-              this._testCases[rowIndex].coverage.push({
-                line: this._sourceCodeLines[columnIndex],
-                covered: true
-              })
+              this._testCases[rowIndex].coverage.push(
+                this._sourceCodeLines[columnIndex]
+              )
               break
             case '+':
               if (!this._testCases[rowIndex].passed)

@@ -16505,7 +16505,7 @@ function getStringTableLineSuspiciousnessForSingleLine(line, sflRanking, testCas
         ? `https://github.com/${stateHelper.repoOwner}/${stateHelper.repoName}/blob/${stateHelper.currentCommitSha}${line.method.file.path}#L${line.lineNumber} `
         : `${line.method.file.name}$${line.method.name}#L${line.lineNumber}`;
     const lineCoveredTests = testCases
-        .filter(testCase => testCase.coverage.some(coverage => coverage.line === line && coverage.covered))
+        .filter(testCase => testCase.coverage.some(lineCoverage => lineCoverage === line))
         .sort((a, b) => {
         if (a.passed && !b.passed) {
             return 1;
@@ -17038,16 +17038,9 @@ class FileParser {
                 parts.forEach((testLineCoverage, columnIndex) => {
                     switch (testLineCoverage) {
                         case '0':
-                            this._testCases[rowIndex].coverage.push({
-                                line: this._sourceCodeLines[columnIndex],
-                                covered: false
-                            });
                             break;
                         case '1':
-                            this._testCases[rowIndex].coverage.push({
-                                line: this._sourceCodeLines[columnIndex],
-                                covered: true
-                            });
+                            this._testCases[rowIndex].coverage.push(this._sourceCodeLines[columnIndex]);
                             break;
                         case '+':
                             if (!this._testCases[rowIndex].passed)

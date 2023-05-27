@@ -255,9 +255,7 @@ export function getStringTableLineSuspiciousnessForSingleLine(
 
   const lineCoveredTests = testCases
     .filter(testCase =>
-      testCase.coverage.some(
-        coverage => coverage.line === line && coverage.covered
-      )
+      testCase.coverage.some(lineCoverage => lineCoverage === line)
     ) // Sort the tests so that the ones that passed are last
     .sort((a, b) => {
       if (a.passed && !b.passed) {
