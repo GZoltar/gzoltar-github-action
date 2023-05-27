@@ -17448,8 +17448,10 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
         body += '\n\n';
         await createCommitPRComment(authToken, { body });
         core.info(`Creating commit/PR threshold diff comment...`);
+        core.debug(`Getting files shown in the diff...`);
         const filesOnDiff = await getFilesOnDiff(authToken);
         if (diffCommentsInCodeBlock) {
+            core.debug(`Getting lines shown in the diff and create diff comments Code Block Suspiciousness by Algorithm...`);
             filesOnDiff.forEach(file => {
                 const linesShownOnDiffFile = lines.filter(line => '/' + file.path === line.method.file.path &&
                     file.changedLines.some(changed => changed.startLine <= line.lineNumber &&
@@ -17470,6 +17472,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             });
         }
         else {
+            core.debug(`Getting lines shown in the diff and create diff comments Line Suspiciousness by Algorithm...`);
             lines.forEach(line => {
                 const fileOnDiff = filesOnDiff.find(file => '/' + file.path === line.method.file.path);
                 if (fileOnDiff) {

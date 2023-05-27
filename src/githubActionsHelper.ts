@@ -106,9 +106,13 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
 
     core.info(`Creating commit/PR threshold diff comment...`)
     // Create comment on diff of commit
+    core.debug(`Getting files shown in the diff...`)
     const filesOnDiff: IFileOnDiff[] = await getFilesOnDiff(authToken)
 
     if (diffCommentsInCodeBlock) {
+      core.debug(
+        `Getting lines shown in the diff and create diff comments Code Block Suspiciousness by Algorithm...`
+      )
       filesOnDiff.forEach(file => {
         const linesShownOnDiffFile = lines.filter(
           line =>
@@ -159,6 +163,9 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
         })
       })
     } else {
+      core.debug(
+        `Getting lines shown in the diff and create diff comments Line Suspiciousness by Algorithm...`
+      )
       lines.forEach(line => {
         const fileOnDiff = filesOnDiff.find(
           file => '/' + file.path === line.method.file.path
