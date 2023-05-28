@@ -17431,7 +17431,7 @@ async function createCommitPRCommentLineSuspiciousnessThreshold(authToken, sflRa
             }
         }
         else {
-            body += '⚠️ **GZoltar localized possible bugs** ⚠️';
+            body += '⚠️ **GZoltar fault localization report** ⚠️';
             core.debug(`Processing Line Suspiciousness by Algorithm...`);
             body +=
                 '<details>\n<summary>Line Suspiciousness by Algorithm</summary>\n\n';

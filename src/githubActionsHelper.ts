@@ -75,7 +75,7 @@ export async function createCommitPRCommentLineSuspiciousnessThreshold(
         body += '**Based on the action inputs, GZoltar has nothing to report**'
       }
     } else {
-      body += '⚠️ **GZoltar localized possible bugs** ⚠️'
+      body += '⚠️ **GZoltar fault localization report** ⚠️'
 
       core.debug(`Processing Line Suspiciousness by Algorithm...`)
       body +=
