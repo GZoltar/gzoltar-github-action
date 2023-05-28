@@ -49,6 +49,58 @@ jobs:
         upload-artifacts: true
 ```
 
+> **Note:** `contents` and `pull-requests` write permissions are needed to create comments on both commits and pull requests
+
 ## Example
 
 A repository with a detailed example can be found [here](https://github.com/hugofpaiva/example-gzoltar-feedback-action).
+
+## Limitations
+
+- **Node Memory Usage**
+
+  This action loads all the content resulting from the GZoltar processing into memory. This is necessary to quickly analyze possible faults and provide the maximum amount of information to the user.
+
+  Although optimizations have been made to avoid excessive memory usage, it can happen. In case of errors in the pipeline related to this, it is always possible to increase the memory of the node in the action step using the `NODE_OPTIONS` environment variable:
+  ```yaml
+  ...
+  - name: Executes GZoltar Automatic Feedback for GitHub Actions to get summarized view
+      uses: hugofpaiva/gzoltar-feedback-action@main
+      env:
+        NODE_OPTIONS: "--max-old-space-size=16384"
+      with:
+        sfl-ranking: "[ochiai, tarantula]"
+        sfl-threshold: "[0.5, 0.85]"
+        sfl-ranking-order: "ochiai"
+        upload-artifacts: true
+  ```
+  In this example, the memory of the node is increased to 16GB, instead of the default 512 MB.
+
+- **Main Comment String Length of a Commit/Pull Request**
+
+  GitHub has a limit of 65536 characters for the main comment of a commit/pull request. This limit is not related to the action, but to the GitHub API itself. If the limit is exceeded, the action will fail.
+  
+  The main comment string can get quite long because in the case of the `Line Suspiciousness by Algorithm` analysis, the tests that covered a given line are shown, including the **stacktrace** in case the test failed. To try to solve this problem, the maximum size of the stacktrace was reduced to 300 chars, placing `...` when this is exceeded. If this problem recurs in several environments, it is always possible to reduce this size or even put it as an action input.
+
+- **Comment area size**
+  
+  GitHub assigns a maximum width of 780px in the comments area. Although this may be sufficient for most cases, when there are long lines of code, the table can be unformatted, making it difficult to understand its content.
+
+  To solve this problem, a simple JavaScript script needs to be executed in the browser console so that the maximum width size is increased. The results are shown in the following image:
+
+  Before:
+  ![Before JS Script](./docs/images/before_js_script_comment_length.png "Before JS Script")
+
+  After:
+  ![After JS Script](./docs/images/after_js_script_comment_length.png "After JS Script")
+
+  The script to be executed is the following:
+  ```javascript
+  // Find the div element with id "comments" 
+  var commentsDiv = document.getElementById("comments"); 
+  // Check if the div element exists 
+  if (commentsDiv) { 
+    // Set the maxWidth of the div element to 2000px 
+    commentsDiv.style.maxWidth = "2000px"; 
+  }
+  ```
