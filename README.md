@@ -89,10 +89,10 @@ A repository with a detailed example can be found [here](https://github.com/hugo
   To solve this problem, a simple JavaScript script needs to be executed in the browser console so that the maximum width size is increased. The results are shown in the following image:
 
   Before:
-  ![Before JS Script](./docs/images/before_js_script_comment_length.png "Before JS Script")
+  ![Before JS Script](./docs/images/before_js_script_comment_length_white.png "Before JS Script")
 
   After:
-  ![After JS Script](./docs/images/after_js_script_comment_length.png "After JS Script")
+  ![After JS Script](./docs/images/after_js_script_comment_length_white.png "After JS Script")
 
   The script to be executed is the following:
   ```javascript
