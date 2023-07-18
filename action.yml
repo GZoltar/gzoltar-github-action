@@ -1,5 +1,8 @@
 name: 'GZoltar Feedback'
 description: 'Analyzes GZoltar results and posts a comment on the pull request/commit with the suspicious lines.'
+branding:
+  icon: alert-triangle
+  color: gray-dark
 inputs:
   token:
     description: >
