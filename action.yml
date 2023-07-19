@@ -1,5 +1,5 @@
-name: 'GZoltar Feedback'
-description: 'Analyzes GZoltar results and posts a comment on the pull request/commit with the suspicious lines.'
+name: 'GZoltar'
+description: '.This action parses the fault localization report produced by [GZoltar](https://github.com/gzoltar/gzoltar) and posts a comment on the pull request or commit with the list of suspicious lines of code and their probability of being faulty.'
 inputs:
   token:
     description: >
