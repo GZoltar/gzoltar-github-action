@@ -2,7 +2,9 @@
 
 [GZoltar](https://github.com/gzoltar/gzoltar) is a Java toolset for fault localization. It has the infrastructure to automatically instrument the source code of software programs to produce runtime data and analyze it in order to return a ranked list of faults candidates based on spectrum-based fault localization (SBFL) formulas.
 
-This action parses the fault localization report produced by [GZoltar](https://github.com/gzoltar/gzoltar) and posts a comment on the pull request or commit with the list of suspicious lines of code and their probability of being faulty.
+This action parses the fault localization report produced by [GZoltar](https://github.com/gzoltar/gzoltar) and posts a comment on the pull request or commit with the list of suspicious lines of code and their probability of being faulty. An example of the comment is shown in the following image:
+
+![Example of the comment](./docs/images/example.png)
 
 A repository with a detailed example can be found [here](https://github.com/hugofpaiva/example-gzoltar-github-action).
 
