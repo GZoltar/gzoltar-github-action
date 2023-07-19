@@ -1,5 +1,8 @@
 name: 'GZoltar'
-description: '.This action parses the fault localization report produced by [GZoltar](https://github.com/gzoltar/gzoltar) and posts a comment on the pull request or commit with the list of suspicious lines of code and their probability of being faulty.'
+description: '[GZoltar](https://github.com/gzoltar/gzoltar) is a Java toolset for fault localization. It has the infrastructure to automatically instrument the source code of software programs to produce runtime data and analyze it in order to return a ranked list of faults candidates based on spectrum-based fault localization (SBFL) formulas. This action parses the fault localization report produced by [GZoltar](https://github.com/gzoltar/gzoltar) and posts a comment on the pull request or commit with the list of suspicious lines of code and their probability of being faulty.'
+branding:
+  icon: alert-triangle
+  color: gray-dark
 inputs:
   token:
     description: >
@@ -27,13 +30,13 @@ inputs:
     description: 'Path to the file containing statistics information of the ranking produced by GZoltar. Example: `/build/sfl/txt/statistics.csv`'
     required: false
   ranking-files-paths:
-    description: 'Path to each SFL ranking algorithms file. Example: `[/build/sfl/txt/ochiai.ranking.csv]`'
+    description: 'Path to each SBFL ranking algorithms file. Example: `[/build/sfl/txt/ochiai.ranking.csv]`'
     required: false
   sfl-ranking:
-    description: 'List of the SFL ranking algorithms to use separated by `,`. (Keep in mind that each algorithm need to have present a fault localization report file in the `ranking-files-path` directory with his name, i.e. `ochiai.ranking.csv`.)'
+    description: 'List of the SBFL ranking algorithms to use separated by `,`. (Keep in mind that each algorithm need to have present a fault localization report file in the `ranking-files-path` directory with his name, i.e. `ochiai.ranking.csv`.)'
     default: '[ochiai]'
   sfl-threshold:
-    description: 'Line suspiciousness threshold to trigger an warning and show on results. A threshold is needed for each SFL ranking algorithms used'
+    description: 'Line suspiciousness threshold to trigger an warning and show on results. A threshold is needed for each SBFL ranking algorithms used'
     default: '[0.5]'
   sfl-ranking-order:
     description: 'Ranking algorithm to order table results by suspiciousness, on descending order.'
