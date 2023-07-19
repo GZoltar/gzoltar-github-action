@@ -1,4 +1,4 @@
-# [GZoltar](https://github.com/gzoltar/gzoltar) Automatic Debugging GitHub Actions
+# [GZoltar](https://github.com/gzoltar/gzoltar) Automatic Debugging for GitHub Actions
 
 [GZoltar](https://github.com/gzoltar/gzoltar) is a Java toolset for fault localization. It has the infrastructure to automatically instrument the source code of software programs to produce runtime data and analyze it in order to return a ranked list of faults candidates based on spectrum-based fault localization (SBFL) formulas.
 
