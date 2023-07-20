@@ -6,7 +6,7 @@ This action parses the fault localization report produced by [GZoltar](https://g
 
 ![Example of the comment](./docs/images/example.png)
 
-A repository with a detailed example can be found [here](https://github.com/hugofpaiva/example-gzoltar-github-action).
+A repository with a detailed example can be found [here](https://github.com/GZoltar/example-gzoltar-github-action).
 
 ## Action inputs
 
