@@ -1,6 +1,12 @@
 # [GZoltar](https://github.com/gzoltar/gzoltar) Automatic Debugging for GitHub Actions
 
-[GZoltar](https://github.com/gzoltar/gzoltar) is a Java toolset for fault localization. It has the infrastructure to automatically instrument the source code of software programs to produce runtime data and analyze it in order to return a ranked list of faults candidates based on spectrum-based fault localization (SBFL) formulas.
+[GZoltar](https://github.com/gzoltar/gzoltar) is a Java toolset used for automatic debugging of Java applications. It is designed to help identify potential defects or bugs in software code by pinpointing the specific lines of code that are likely to be responsible for causing failures or errors.
+
+[GZoltar](https://github.com/gzoltar/gzoltar) works by analyzing the program's execution traces, typically generated during testing or debugging. It collects coverage information to understand which parts of the code were executed when a failure occurred. Using this information, it employs various [spectrum-based fault localization techniques](https://ieeexplore.ieee.org/abstract/document/7390282) to narrow down the search space and highlight the lines of code, methods, or Java classes most likely to be the root cause of the bug.
+
+By providing developers with this valuable information, [GZoltar](https://github.com/gzoltar/gzoltar) aids in the debugging process and accelerates the identification and resolution of software defects, ultimately leading to improved software reliability and quality.
+
+[GZoltar](https://github.com/gzoltar/gzoltar) is currently available as a [command line interface](https://github.com/GZoltar/gzoltar/tree/master/com.gzoltar.cli), [Ant task](https://github.com/GZoltar/gzoltar/tree/master/com.gzoltar.ant), [Maven plug-in](https://github.com/GZoltar/gzoltar/tree/master/com.gzoltar.maven), [VScode extension](https://github.com/GZoltar/gzoltar/tree/master/com.gzoltar.vscode); and it integrates seamlessly with [JUnit](https://junit.org) tests.
 
 This action parses the fault localization report produced by [GZoltar](https://github.com/gzoltar/gzoltar) and posts a comment on the pull request or commit with the list of suspicious lines of code and their probability of being faulty. An example of the comment is shown in the following image:
 
